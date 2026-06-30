@@ -155,6 +155,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .period-days-big{font-size:20px;font-weight:700;color:#993556}
 .period-days-lbl{font-size:10px;color:#993556;font-weight:400}
 
+/* GRACE PERIOD */
+.grace-banner{margin:8px 16px;background:#fef3c7;border:1px solid #fcd34d;border-radius:12px;padding:11px 13px}
+.grace-title{font-size:12px;font-weight:700;color:#92400e;margin-bottom:3px}
+.grace-body{font-size:11px;color:#92400e;line-height:1.4}
+.past-day-section{margin-bottom:6px}
+.past-day-label{font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.07em;padding:8px 16px 4px}
+.past-day-label .days-left{color:#92400e;font-weight:600;text-transform:none;letter-spacing:0}
+
+/* DAY DETAIL POPUP (Progress screen) */
+.day-detail{margin:0 16px 8px;background:#fff;border:1px solid #e8e0d6;border-radius:13px;padding:13px;display:none}
+.day-detail.show{display:block}
+.day-detail-title{font-size:13px;font-weight:700;color:#2c2c2a;margin-bottom:2px}
+.day-detail-badge{font-size:11px;font-weight:600;margin-bottom:10px;display:inline-block}
+.detail-task-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f5f3ef}
+.detail-task-row:last-child{border-bottom:none}
+.detail-task-check{width:18px;height:18px;border-radius:50%;border:1.5px solid #d3d1c7;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0;margin-top:1px}
+.detail-task-check.done{background:#639922;border-color:#639922;color:#fff}
+.detail-task-name{font-size:12px;font-weight:600;color:#2c2c2a}
+.detail-task-meta{font-size:11px;color:#888780;margin-top:1px}
+
+.phase-legend{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px;margin-bottom:8px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#444441}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
 .wellness-card{margin:0 16px 16px;background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:14px}
 .wellness-locked{text-align:center;font-size:12px;color:#b4b2a9;font-style:italic;padding:8px 0}
 .w-sec{margin-bottom:10px}
@@ -400,8 +424,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div class="prog-text" id="hero-prog-text">0% complete</div>
         </div>
 
+        <div id="grace-banner-wrap"></div>
+
         <div class="sec-label" id="tasks-label">Today's tasks</div>
         <div class="task-list" id="task-list"></div>
+
+        <div id="past-days-wrap"></div>
 
         <div id="period-strip-wrap"></div>
 
@@ -472,6 +500,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
         <div id="dot-view"></div>
         <div id="cal-view" style="display:none"></div>
+        <div class="day-detail" id="day-detail-card"></div>
         <div class="sec-label">Body stats</div>
         <div id="body-stats-section"></div>
         <div class="sec-label">Books completed</div>
@@ -701,6 +730,67 @@ function isExpired(ts) {
   const t = ts.toDate ? ts.toDate() : new Date(ts);
   return Date.now() - t.getTime() > 24*60*60*1000;
 }
+
+// ── PERIOD PHASE CALCULATION ──
+function getCyclePhase(dateStr, lastPeriod, cycleLen) {
+  if (!lastPeriod || !cycleLen) return null;
+  const start = new Date(lastPeriod+'T12:00:00');
+  const check = new Date(dateStr+'T12:00:00');
+  let diffDays = Math.floor((check-start)/86400000);
+  // Normalize into current cycle (handle dates before/after multiple cycles)
+  diffDays = ((diffDays % cycleLen) + cycleLen) % cycleLen;
+  const cycleDay = diffDays + 1; // 1-indexed
+
+  const menstrualEnd = Math.round(cycleLen * 0.18); // ~5 days of 28
+  const ovulationStart = Math.round(cycleLen * 0.46); // ~13 of 28
+  const ovulationEnd = Math.round(cycleLen * 0.57); // ~16 of 28
+
+  if (cycleDay <= menstrualEnd) return { phase: 'menstrual', label: 'Menstrual', color: '#f87171' };
+  if (cycleDay <= ovulationStart) return { phase: 'follicular', label: 'Follicular', color: '#60a5fa' };
+  if (cycleDay <= ovulationEnd) return { phase: 'ovulation', label: 'Ovulation', color: '#34d399' };
+  return { phase: 'luteal', label: 'Luteal', color: '#c084fc' };
+}
+
+// ── GRACE PERIOD LOGIC ──
+function dayCompleteCheck(td) {
+  if (!td) return false;
+  return !!(td.w1type && td.w1mins >= 45 && td.w2type && td.w2mins >= 45 &&
+    (td.water||0) >= 4 && td.readDone && td.dietDone && td.photoDone);
+}
+
+function getGraceDays(startDate, days) {
+  // Returns days within last 5 days (excluding today) that are incomplete
+  const today = todayStr();
+  const result = [];
+  const start = new Date(startDate+'T12:00:00');
+  const dn = dayNum(startDate);
+  for (let d = Math.max(1, dn-5); d < dn; d++) {
+    const ds = new Date(start);
+    ds.setDate(ds.getDate() + (d-1));
+    const dateStr = ds.toISOString().slice(0,10);
+    const td = (days||{})[dateStr];
+    const complete = dayCompleteCheck(td);
+    if (!complete) {
+      const daysLeft = 5 - (dn - d);
+      result.push({ day: d, date: dateStr, daysLeft });
+    }
+  }
+  return result;
+}
+
+function checkAutoRestart(startDate, days) {
+  // Check if any day older than 5 days (and within challenge) is incomplete -> restart needed
+  const dn = dayNum(startDate);
+  const start = new Date(startDate+'T12:00:00');
+  for (let d = 1; d <= dn-6; d++) {
+    const ds = new Date(start);
+    ds.setDate(ds.getDate() + (d-1));
+    const dateStr = ds.toISOString().slice(0,10);
+    const td = (days||{})[dateStr];
+    if (!dayCompleteCheck(td)) return { restart: true, failedDay: d, failedDate: dateStr };
+  }
+  return { restart: false };
+}
 function compressImage(file, maxSize=400) {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -848,6 +938,20 @@ async function bootApp() {
   });
 
   await loadGroups();
+
+  // Check for auto-restart due to expired grace period
+  const restartCheck = checkAutoRestart(ME.startDate, ME.days);
+  if (restartCheck.restart) {
+    await updateDoc(doc(db, 'users', ME.id), {
+      startDate: todayStr(), days: {}, books: [], currentBook: null,
+      weightLogs: [{ day:1, date:todayStr(), value: ME.weight||0 }],
+      measurementLogs: [], wellnessHistory: []
+    });
+    ME.startDate = todayStr();
+    ME.days = {};
+    showNotif('⚠ Day ' + restartCheck.failedDay + ' was never completed — challenge restarted from day 1');
+  }
+
   goTo('progress');
 }
 
@@ -908,8 +1012,176 @@ function renderToday() {
   document.getElementById('hero-prog-text').textContent = pct + '% complete' + (pct > 0 ? ' — keep going!' : ' — let\'s start!');
 
   renderTaskList(todayData, today);
+  renderGraceSection();
   renderPeriodStrip();
   renderWellnessSection(todayData);
+}
+
+function renderGraceSection() {
+  const banner = document.getElementById('grace-banner-wrap');
+  const pastWrap = document.getElementById('past-days-wrap');
+  const graceDays = getGraceDays(ME.startDate, ME.days);
+
+  if (!graceDays.length) {
+    banner.innerHTML = '';
+    pastWrap.innerHTML = '';
+    return;
+  }
+
+  const worst = graceDays[0];
+  banner.innerHTML = `<div class="grace-banner">
+    <div class="grace-title">⏳ Day ${worst.day} is incomplete — ${worst.daysLeft} day${worst.daysLeft===1?'':'s'} left to fix it</div>
+    <div class="grace-body">You have 5 days from each past day to go back and complete it. After that the challenge restarts automatically.</div>
+  </div>`;
+
+  pastWrap.innerHTML = '';
+  graceDays.forEach(gd => {
+    const td = (ME.days||{})[gd.date] || {};
+    const section = document.createElement('div');
+    section.className = 'past-day-section';
+    const label = document.createElement('div');
+    label.className = 'past-day-label';
+    label.innerHTML = `Day ${gd.day} tasks — <span class="days-left">${gd.daysLeft} day${gd.daysLeft===1?'':'s'} left to complete</span>`;
+    section.appendChild(label);
+    const list = document.createElement('div');
+    list.className = 'task-list';
+    list.style.marginBottom = '8px';
+    list.appendChild(buildTaskCardsForDate(td, gd.date));
+    section.appendChild(list);
+    pastWrap.appendChild(section);
+  });
+}
+
+function buildTaskCardsForDate(td, dateStr) {
+  const frag = document.createDocumentFragment();
+  const w1done = !!(td.w1type && td.w1mins >= 45);
+  const w2done = !!(td.w2type && td.w2mins >= 45);
+  const waterDone = (td.water||0) >= 4;
+  const readDone = !!td.readDone;
+  const dietDone = !!td.dietDone;
+  const photoDone = !!td.photoDone;
+
+  const w1 = makeTaskCard('🏋️', 'Workout 1', w1done ? (td.w1type+' · '+td.w1mins+' min ✓') : (td.w1type||td.w1mins ? 'In progress — '+(td.w1type||'no type')+' · '+(td.w1mins||0)+' min' : 'Tap to edit'), w1done, false);
+  if (!w1done) appendPastWorkoutInputs(w1, dateStr, 1, td);
+  frag.appendChild(w1);
+
+  const w2 = makeTaskCard('🌳', 'Workout 2', w2done ? (td.w2type+' · '+td.w2mins+' min ✓') : (td.w2type||td.w2mins ? 'In progress — '+(td.w2type||'no type')+' · '+(td.w2mins||0)+' min' : 'Tap to edit'), w2done, false);
+  if (!w2done) appendPastWorkoutInputs(w2, dateStr, 2, td);
+  frag.appendChild(w2);
+
+  const wC = makeTaskCard('💧', 'Water', waterDone ? 'All 4 bottles ✓' : ((td.water||0)+' of 4 bottles'), waterDone, false);
+  if (!waterDone) {
+    const bottles = document.createElement('div');
+    bottles.className = 'water-row';
+    for (let i=1;i<=4;i++) {
+      const filled = (td.water||0) >= i;
+      const b = document.createElement('div');
+      b.className = 'bottle-btn' + (filled?' filled':'');
+      b.innerHTML = `<div class="bottle-emoji">🫙</div><div class="bottle-num">${i}</div>`;
+      b.onclick = () => togglePastBottle(dateStr, i);
+      bottles.appendChild(b);
+    }
+    wC.appendChild(bottles);
+  }
+  frag.appendChild(wC);
+
+  const bookForDay = td.bookTitle || ME.currentBook || '';
+  const r = makeTaskCard('📖', 'Reading', readDone ? ('📚 '+(bookForDay||'Unknown book')+' ✓') : (bookForDay ? '📚 '+bookForDay+' — tap to mark done' : 'Tap to mark done'), readDone, false);
+  if (!readDone) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'margin-top:8px;width:100%;padding:7px;border-radius:8px;background:#eaf3de;border:1px solid #c0dd97;color:#3b6d11;font-size:12px;font-weight:600;cursor:pointer';
+    btn.textContent = 'Mark reading done ✓';
+    btn.onclick = () => savePastDayField(dateStr, 'readDone', true);
+    r.appendChild(btn);
+  }
+  frag.appendChild(r);
+
+  const d = makeTaskCard('🥗', 'Diet', dietDone ? 'Done ✓' : 'Tap to mark done', dietDone, false);
+  if (!dietDone) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'margin-top:8px;width:100%;padding:7px;border-radius:8px;background:#eaf3de;border:1px solid #c0dd97;color:#3b6d11;font-size:12px;font-weight:600;cursor:pointer';
+    btn.textContent = 'Mark diet done ✓';
+    btn.onclick = () => savePastDayField(dateStr, 'dietDone', true);
+    d.appendChild(btn);
+  }
+  frag.appendChild(d);
+
+  const p = makeTaskCard('📸', 'Photo', photoDone ? 'Uploaded ✓' : 'Tap to upload', photoDone, false);
+  if (!photoDone) {
+    const area = document.createElement('div');
+    area.className = 'photo-upload-area';
+    area.innerHTML = `<div class="photo-upload-label">📷 Tap to upload photo</div><div class="photo-upload-hint">For Day ${dayNum(ME.startDate) - (dayNum(ME.startDate) - parseInt(Object.keys(ME.days||{}).indexOf(dateStr)+1 || 1))}</div>`;
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
+    input.onchange = (e) => handlePastPhotoUpload(e, dateStr);
+    area.onclick = () => input.click();
+    p.appendChild(area);
+    p.appendChild(input);
+  }
+  frag.appendChild(p);
+
+  return frag;
+}
+
+function appendPastWorkoutInputs(card, dateStr, num, td) {
+  const exp = document.createElement('div');
+  exp.className = 'task-expand';
+  const typeOptions = num===1
+    ? ['Strength training','Cardio','HIIT','Yoga','Pilates','Swimming','Cycling','Sports','Other']
+    : ['Walk','Run','Cycling','Swimming','Sports','Hiking','Other'];
+  const selId = 'past-w'+num+'-type-'+dateStr;
+  const minsId = 'past-w'+num+'-mins-'+dateStr;
+  exp.innerHTML = `<div class="workout-row">
+    <select class="workout-select" id="${selId}">
+      <option value="">Type ▾</option>
+      ${typeOptions.map(o=>`<option ${td['w'+num+'type']===o?'selected':''}>${o}</option>`).join('')}
+    </select>
+    <input class="workout-mins" id="${minsId}" type="number" min="1" max="300" placeholder="mins" value="${td['w'+num+'mins']||''}"/>
+  </div>
+  <div class="blocked-hint">⚠ Need type + at least 45 min</div>`;
+  card.appendChild(exp);
+  setTimeout(() => {
+    document.getElementById(selId)?.addEventListener('change', () => savePastWorkout(dateStr, num));
+    document.getElementById(minsId)?.addEventListener('input', () => savePastWorkout(dateStr, num));
+  }, 0);
+}
+
+window.savePastWorkout = async (dateStr, num) => {
+  const type = document.getElementById('past-w'+num+'-type-'+dateStr)?.value;
+  const mins = parseInt(document.getElementById('past-w'+num+'-mins-'+dateStr)?.value)||0;
+  const update = {};
+  update['days.'+dateStr+'.w'+num+'type'] = type;
+  update['days.'+dateStr+'.w'+num+'mins'] = mins;
+  await updateDoc(doc(db, 'users', ME.id), update);
+};
+
+window.togglePastBottle = async (dateStr, n) => {
+  const current = (ME.days||{})[dateStr]?.water || 0;
+  const newVal = current >= n ? n-1 : n;
+  await updateDoc(doc(db, 'users', ME.id), { ['days.'+dateStr+'.water']: newVal });
+};
+
+window.savePastDayField = async (dateStr, field, value) => {
+  const update = { ['days.'+dateStr+'.'+field]: value };
+  if (field === 'readDone' && ME.currentBook) {
+    update['days.'+dateStr+'.bookTitle'] = ME.currentBook;
+  }
+  await updateDoc(doc(db, 'users', ME.id), update);
+};
+
+async function handlePastPhotoUpload(e, dateStr) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const b64 = await compressImage(file);
+  const pastDayNum = Math.round((new Date(dateStr+'T12:00:00') - new Date(ME.startDate+'T12:00:00'))/86400000) + 1;
+  const msg = {
+    type: 'photo', subtype: 'progress', senderId: ME.id, senderName: ME.name,
+    day: pastDayNum, b64, timestamp: serverTimestamp(), viewedBy: [],
+  };
+  for (const g of myGroups) {
+    await addDoc(collection(db, 'groups', g.id, 'messages'), msg);
+  }
+  await savePastDayField(dateStr, 'photoDone', true);
 }
 
 function renderTaskList(todayData, today) {
@@ -1077,7 +1349,11 @@ window.toggleBottle = async (n) => {
 
 async function saveDayField(field, value) {
   const today = todayStr();
-  await updateDoc(doc(db, 'users', ME.id), { ['days.'+today+'.'+field]: value });
+  const update = { ['days.'+today+'.'+field]: value };
+  if (field === 'readDone' && ME.currentBook) {
+    update['days.'+today+'.bookTitle'] = ME.currentBook;
+  }
+  await updateDoc(doc(db, 'users', ME.id), update);
 }
 
 window.openBookModal = (isFinish) => {
@@ -1258,14 +1534,37 @@ function renderDotView() {
     dot.className = 'dot';
     dot.textContent = i+1;
     dot.title = 'Day '+(i+1)+': '+ds;
-    if (ds === today) dot.classList.add('today');
+    if (ds === today) { dot.classList.add('today'); dot.onclick = () => showDayDetail(i+1, ds); }
     else if (ds < today) {
       const day = (ME.days||{})[ds];
-      dot.classList.add(day?.allDone ? 'done' : 'future');
+      const complete = dayCompleteCheck(day);
+      dot.classList.add(complete ? 'done' : 'future');
+      dot.onclick = () => showDayDetail(i+1, ds);
     } else dot.classList.add('future');
     grid.appendChild(dot);
   }
   wrap.appendChild(grid);
+}
+
+function showDayDetail(dn, dateStr) {
+  const card = document.getElementById('day-detail-card');
+  const td = (ME.days||{})[dateStr] || {};
+  const complete = dayCompleteCheck(td);
+  const isToday = dateStr === todayStr();
+
+  const tasks = [
+    { name: 'Workout 1', done: !!(td.w1type && td.w1mins>=45), meta: td.w1type ? (td.w1type+' · '+(td.w1mins||0)+' min') : 'Not started' },
+    { name: 'Workout 2', done: !!(td.w2type && td.w2mins>=45), meta: td.w2type ? (td.w2type+' · '+(td.w2mins||0)+' min') : 'Not started' },
+    { name: 'Water', done: (td.water||0)>=4, meta: (td.water||0)+' of 4 bottles' },
+    { name: 'Reading', done: !!td.readDone, meta: td.bookTitle ? ('📚 '+td.bookTitle) : (ME.currentBook ? '📚 '+ME.currentBook : 'No book set') },
+    { name: 'Diet', done: !!td.dietDone, meta: ME.diet ? '"'+ME.diet+'"' : '' },
+    { name: 'Photo', done: !!td.photoDone, meta: td.photoDone ? 'Uploaded' : 'Not uploaded' },
+  ];
+
+  card.innerHTML = `<div class="day-detail-title">Day ${dn} — ${fmtDate(dateStr)}${isToday?' (today)':''}</div>
+    <div class="day-detail-badge" style="color:${complete?'#3b6d11':'#92400e'}">${complete?'✅ Complete':'⚠ Incomplete'}</div>
+    ${tasks.map(t => `<div class="detail-task-row"><div class="detail-task-check ${t.done?'done':''}">${t.done?'✓':''}</div><div><div class="detail-task-name">${t.name}</div>${t.meta?`<div class="detail-task-meta">${t.meta}</div>`:''}</div></div>`).join('')}`;
+  card.classList.add('show');
 }
 
 function renderCalView() {
@@ -1275,6 +1574,18 @@ function renderCalView() {
   const today = todayStr();
   const start = new Date(ME.startDate+'T12:00:00');
   const endDate = challengeEndDate(ME.startDate);
+  const showPhases = ME.gender === 'female' && ME.lastPeriod && ME.cycleLength;
+
+  if (showPhases) {
+    const legend = document.createElement('div');
+    legend.className = 'phase-legend';
+    legend.innerHTML = `
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>Menstrual</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Follicular</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div>Ovulation</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Luteal</div>`;
+    wrap.appendChild(legend);
+  }
 
   // Group days by month
   const months = {};
@@ -1318,11 +1629,21 @@ function renderCalView() {
       cell.textContent = day;
       const cd = challengeDays.get(day);
       if (cd) {
-        if (cd.ds === today) cell.classList.add('today');
+        if (cd.ds === today) { cell.classList.add('today'); cell.onclick = () => showDayDetail(cd.dayNum, cd.ds); }
         else if (cd.ds < today) {
           const dayData = (ME.days||{})[cd.ds];
-          cell.classList.add(dayData?.allDone ? 'done' : 'future');
+          const complete = dayCompleteCheck(dayData);
+          cell.classList.add(complete ? 'done' : 'future');
+          cell.onclick = () => showDayDetail(cd.dayNum, cd.ds);
         } else cell.classList.add('future');
+        if (showPhases) {
+          const phase = getCyclePhase(cd.ds, ME.lastPeriod, ME.cycleLength);
+          if (phase) {
+            const pdot = document.createElement('div');
+            pdot.style.cssText = `width:4px;height:4px;border-radius:50%;margin:1px auto 0;background:${phase.color}`;
+            cell.appendChild(pdot);
+          }
+        }
       } else cell.classList.add('future');
       grid.appendChild(cell);
     }
@@ -1335,6 +1656,16 @@ function renderCalView() {
     pill.className = 'finish-pill';
     pill.innerHTML = '🎉 Challenge ends on <strong>' + fmtDate(endDate) + '</strong>';
     wrap.appendChild(pill);
+  }
+
+  if (showPhases) {
+    const next = nextPeriod(ME.lastPeriod, ME.cycleLength);
+    const ovulDate = new Date(next+'T12:00:00');
+    ovulDate.setDate(ovulDate.getDate() - Math.round(ME.cycleLength*0.5));
+    const info = document.createElement('div');
+    info.style.cssText = 'margin:0 0 8px;background:#fbeaf0;border:1px solid #f4c0d1;border-radius:10px;padding:9px 12px;font-size:11px;color:#72243e';
+    info.innerHTML = `🌸 Next period expected <strong>${fmtDate(next)}</strong>`;
+    wrap.appendChild(info);
   }
 }
 
