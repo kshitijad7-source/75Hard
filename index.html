@@ -275,6 +275,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .photo-expired-text{font-size:11px;color:#b4b2a9;font-style:italic}
 
 .chat-input-wrap{padding:8px 16px 10px;border-top:1px solid #e8e0d6;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.photo-attach{width:34px;height:34px;border-radius:50%;background:#f5f3ef;border:1px solid #e8e0d6;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;cursor:pointer}
+.photo-attach:active{background:#e8e0d6}
 .chat-input{flex:1;padding:9px 13px;border-radius:22px;border:1px solid #e8e0d6;background:#fff;font-size:13px;color:#2c2c2a;outline:none}
 .chat-input:focus{border-color:#7c9885}
 .chat-send-btn{width:36px;height:36px;border-radius:50%;background:#7c9885;border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -523,6 +525,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="chat-body">
         <div class="chat-messages" id="chat-messages"></div>
         <div class="chat-input-wrap">
+          <button class="photo-attach" onclick="document.getElementById('chat-photo-input').click()" type="button">📎</button>
+          <input type="file" accept="image/*" id="chat-photo-input" style="display:none" onchange="handleChatPhotoUpload(event)"/>
           <input class="chat-input" id="chat-input" placeholder="Message or paste a link…" onkeydown="if(event.key==='Enter')sendMessage()"/>
           <button class="chat-send-btn" onclick="sendMessage()">➤</button>
         </div>
@@ -758,20 +762,22 @@ function dayCompleteCheck(td) {
     (td.water||0) >= 4 && td.readDone && td.dietDone && td.photoDone);
 }
 
+const GRACE_DAYS = 2;
+
 function getGraceDays(startDate, days) {
-  // Returns days within last 5 days (excluding today) that are incomplete
+  // Returns days within the grace window (excluding today) that are incomplete
   const today = todayStr();
   const result = [];
   const start = new Date(startDate+'T12:00:00');
   const dn = dayNum(startDate);
-  for (let d = Math.max(1, dn-5); d < dn; d++) {
+  for (let d = Math.max(1, dn-GRACE_DAYS); d < dn; d++) {
     const ds = new Date(start);
     ds.setDate(ds.getDate() + (d-1));
     const dateStr = ds.toISOString().slice(0,10);
     const td = (days||{})[dateStr];
     const complete = dayCompleteCheck(td);
     if (!complete) {
-      const daysLeft = 5 - (dn - d);
+      const daysLeft = GRACE_DAYS - (dn - d);
       result.push({ day: d, date: dateStr, daysLeft });
     }
   }
@@ -779,10 +785,10 @@ function getGraceDays(startDate, days) {
 }
 
 function checkAutoRestart(startDate, days) {
-  // Check if any day older than 5 days (and within challenge) is incomplete -> restart needed
+  // Check if any day older than the grace window (and within challenge) is incomplete -> restart needed
   const dn = dayNum(startDate);
   const start = new Date(startDate+'T12:00:00');
-  for (let d = 1; d <= dn-6; d++) {
+  for (let d = 1; d <= dn-(GRACE_DAYS+1); d++) {
     const ds = new Date(start);
     ds.setDate(ds.getDate() + (d-1));
     const dateStr = ds.toISOString().slice(0,10);
@@ -1031,7 +1037,7 @@ function renderGraceSection() {
   const worst = graceDays[0];
   banner.innerHTML = `<div class="grace-banner">
     <div class="grace-title">⏳ Day ${worst.day} is incomplete — ${worst.daysLeft} day${worst.daysLeft===1?'':'s'} left to fix it</div>
-    <div class="grace-body">You have 5 days from each past day to go back and complete it. After that the challenge restarts automatically.</div>
+    <div class="grace-body">You have ${GRACE_DAYS} days from each past day to go back and complete it. After that the challenge restarts automatically.</div>
   </div>`;
 
   pastWrap.innerHTML = '';
@@ -1387,7 +1393,7 @@ async function handlePhotoUpload(e) {
   const b64 = await compressImage(file);
   const today = todayStr();
   const msg = {
-    type: 'photo', senderId: ME.id, senderName: ME.name,
+    type: 'photo', subtype: 'progress', senderId: ME.id, senderName: ME.name,
     day: dayNum(ME.startDate), b64,
     timestamp: serverTimestamp(),
     viewedBy: [],
@@ -1828,7 +1834,8 @@ async function renderMessages(docs) {
       if (msg.timestamp && isExpired(msg.timestamp)) {
         const card = document.createElement('div');
         card.className = 'photo-msg-card' + (msg.senderId===ME.id?' mine':'');
-        card.innerHTML = `<div class="photo-card-top"><div class="photo-avatar-sm">${initials(msg.senderName)}</div><div><div class="photo-card-name">${msg.senderName}</div><div class="photo-card-day">Day ${msg.day} · expired</div></div></div><div class="photo-expired-area"><div class="photo-expired-text">Photo expired</div></div>`;
+        const dayLabel = msg.subtype === 'chat' ? (msg.caption||'Photo') : ('Day '+msg.day+' progress photo');
+        card.innerHTML = `<div class="photo-card-top"><div class="photo-avatar-sm">${initials(msg.senderName)}</div><div><div class="photo-card-name">${msg.senderName}</div><div class="photo-card-day">${dayLabel} · expired</div></div></div><div class="photo-expired-area"><div class="photo-expired-text">Photo expired</div></div>`;
         container.appendChild(card);
         continue;
       }
@@ -1836,15 +1843,29 @@ async function renderMessages(docs) {
       const iViewed = viewedBy.includes(ME.id);
       const card = document.createElement('div');
       card.className = 'photo-msg-card' + (msg.senderId===ME.id?' mine':'');
-      let photoContent = '';
+      const label = msg.subtype === 'chat' ? (msg.caption || '📷 Photo') : ('Day '+msg.day+' progress photo');
+      const header = document.createElement('div');
+      header.className = 'photo-card-top';
+      header.innerHTML = `<div class="photo-avatar-sm">${initials(msg.senderName)}</div><div><div class="photo-card-name">${msg.senderName}</div><div class="photo-card-day">${label}</div></div>`;
+      card.appendChild(header);
+
       if (msg.senderId === ME.id) {
-        photoContent = `<div class="photo-img-area"><img src="${msg.b64}" alt="Your progress photo"/></div>`;
+        const imgArea = document.createElement('div');
+        imgArea.className = 'photo-img-area';
+        imgArea.innerHTML = `<img src="${msg.b64}" alt="Your photo"/>`;
+        card.appendChild(imgArea);
       } else if (iViewed) {
-        photoContent = `<div class="photo-viewed-area"><div class="photo-viewed-text">Already viewed · no longer available</div></div>`;
+        const viewedArea = document.createElement('div');
+        viewedArea.className = 'photo-viewed-area';
+        viewedArea.innerHTML = `<div class="photo-viewed-text">Already viewed · no longer available</div>`;
+        card.appendChild(viewedArea);
       } else {
-        photoContent = `<div class="photo-tap-area" onclick="viewPhoto('${d.id}','${activeGroupId}',this,${JSON.stringify(msg.b64).replace(/"/g,'&quot;')})"><div class="photo-tap-text">👆 Tap to view once</div><div class="photo-tap-hint">Disappears after you view it</div></div>`;
+        const tapArea = document.createElement('div');
+        tapArea.className = 'photo-tap-area';
+        tapArea.innerHTML = `<div class="photo-tap-text">👆 Tap to view once</div><div class="photo-tap-hint">Shows for 5 seconds then disappears</div>`;
+        tapArea.addEventListener('click', () => viewPhotoOnce(msg.id, activeGroupId, tapArea, msg.b64));
+        card.appendChild(tapArea);
       }
-      card.innerHTML = `<div class="photo-card-top"><div class="photo-avatar-sm">${initials(msg.senderName)}</div><div><div class="photo-card-name">${msg.senderName}</div><div class="photo-card-day">Day ${msg.day} progress photo</div></div></div>${photoContent}`;
       container.appendChild(card);
       continue;
     }
@@ -1875,18 +1896,53 @@ async function renderMessages(docs) {
   document.getElementById('chat-nav-badge')?.classList.remove('has-badge');
 }
 
-window.viewPhoto = async (msgId, groupId, el, b64) => {
+async function viewPhotoOnce(msgId, groupId, tapAreaEl, b64) {
+  // Mark as viewed in Firestore immediately
   const msgRef = doc(db, 'groups', groupId, 'messages', msgId);
-  const snap = await getDoc(msgRef);
-  if (!snap.exists()) return;
-  const data = snap.data();
-  const viewedBy = data.viewedBy || [];
-  if (!viewedBy.includes(ME.id)) {
-    viewedBy.push(ME.id);
-    await updateDoc(msgRef, { viewedBy });
-  }
-  const parent = el.parentElement;
-  parent.querySelector('.photo-tap-area').outerHTML = `<div class="photo-img-area"><img src="${b64}" alt="Progress photo"/></div>`;
+  try {
+    const snap = await getDoc(msgRef);
+    if (snap.exists()) {
+      const viewedBy = snap.data().viewedBy || [];
+      if (!viewedBy.includes(ME.id)) {
+        viewedBy.push(ME.id);
+        await updateDoc(msgRef, { viewedBy });
+      }
+    }
+  } catch(e) { console.error(e); }
+
+  // Show the image with a 5 second countdown, then replace with "viewed" state
+  const card = tapAreaEl.parentElement;
+  const imgArea = document.createElement('div');
+  imgArea.className = 'photo-img-area';
+  imgArea.style.position = 'relative';
+  imgArea.innerHTML = `<img src="${b64}" alt="Photo"/><div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px" id="countdown-${msgId}">5</div>`;
+  tapAreaEl.replaceWith(imgArea);
+
+  let secondsLeft = 5;
+  const countdownEl = document.getElementById('countdown-'+msgId);
+  const interval = setInterval(() => {
+    secondsLeft--;
+    if (countdownEl) countdownEl.textContent = secondsLeft;
+    if (secondsLeft <= 0) {
+      clearInterval(interval);
+      const viewedArea = document.createElement('div');
+      viewedArea.className = 'photo-viewed-area';
+      viewedArea.innerHTML = `<div class="photo-viewed-text">Already viewed · no longer available</div>`;
+      imgArea.replaceWith(viewedArea);
+    }
+  }, 1000);
+}
+
+window.handleChatPhotoUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !activeGroupId) return;
+  const b64 = await compressImage(file);
+  await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
+    type: 'photo', subtype: 'chat', caption: '📷 Shared photo',
+    senderId: ME.id, senderName: ME.name,
+    b64, timestamp: serverTimestamp(), viewedBy: [],
+  });
+  e.target.value = '';
 };
 
 window.sendMessage = async () => {
