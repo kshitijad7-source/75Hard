@@ -1843,6 +1843,10 @@ function subscribeChat() {
       const badge = document.getElementById('chat-nav-badge');
       if (badge) badge.classList.add('has-badge');
     }
+  }, err => {
+    console.error('Chat subscription error:', err);
+    const container = document.getElementById('chat-messages');
+    if (container) container.innerHTML = '<div style="text-align:center;padding:20px;color:#c0392b;font-size:12px">Could not load messages: ' + err.message + '<br><br>This is usually a Firestore permissions issue — check your security rules.</div>';
   });
 }
 
@@ -1987,15 +1991,16 @@ window.sendMessage = async () => {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
-  await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
-    type: 'text', text, senderId: ME.id, senderName: ME.name,
-    timestamp: serverTimestamp()
-  });
-  // Notify other members
-  const members = Object.values(groupMembers[activeGroupId]||{});
-  members.filter(m=>m.id!==ME.id).forEach(() => {
-    showNotif(ME.name + ': ' + text.slice(0,40));
-  });
+  try {
+    await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
+      type: 'text', text, senderId: ME.id, senderName: ME.name,
+      timestamp: serverTimestamp()
+    });
+  } catch (err) {
+    console.error('Send message failed:', err);
+    alert('Message failed to send: ' + err.message);
+    input.value = text;
+  }
 };
 
 // ── PROFILE ──
