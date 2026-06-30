@@ -729,6 +729,19 @@ function challengeEndDate(startDate) {
   d.setDate(d.getDate()+74);
   return d.toISOString().slice(0,10);
 }
+function getYouTubeId(url) {
+  try {
+    const u = new URL(url);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+    if (u.hostname.includes('youtube.com')) {
+      if (u.pathname === '/watch') return u.searchParams.get('v');
+      if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/')[2];
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2];
+    }
+  } catch(e) {}
+  return null;
+}
+
 function isExpired(ts) {
   if (!ts) return false;
   const t = ts.toDate ? ts.toDate() : new Date(ts);
@@ -797,8 +810,8 @@ function checkAutoRestart(startDate, days) {
   }
   return { restart: false };
 }
-function compressImage(file, maxSize=400) {
-  return new Promise((resolve) => {
+function compressImage(file, maxSize=320) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
@@ -809,10 +822,19 @@ function compressImage(file, maxSize=400) {
         canvas.height = Math.round(img.height*ratio);
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', 0.6));
+        let quality = 0.55;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        // Safety: keep shrinking quality if still too big for Firestore (1MB doc limit)
+        while (dataUrl.length > 700000 && quality > 0.15) {
+          quality -= 0.1;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        resolve(dataUrl);
       };
+      img.onerror = reject;
       img.src = e.target.result;
     };
+    reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 }
@@ -1390,18 +1412,24 @@ window.saveBook = async () => {
 async function handlePhotoUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const b64 = await compressImage(file);
-  const today = todayStr();
-  const msg = {
-    type: 'photo', subtype: 'progress', senderId: ME.id, senderName: ME.name,
-    day: dayNum(ME.startDate), b64,
-    timestamp: serverTimestamp(),
-    viewedBy: [],
-  };
-  for (const g of myGroups) {
-    await addDoc(collection(db, 'groups', g.id, 'messages'), msg);
+  try {
+    const b64 = await compressImage(file);
+    const today = todayStr();
+    const msg = {
+      type: 'photo', subtype: 'progress', senderId: ME.id, senderName: ME.name,
+      day: dayNum(ME.startDate), b64,
+      timestamp: serverTimestamp(),
+      viewedBy: [],
+    };
+    for (const g of myGroups) {
+      await addDoc(collection(db, 'groups', g.id, 'messages'), msg);
+    }
+    await saveDayField('photoDone', true);
+    showNotif('Photo uploaded and shared 📸');
+  } catch (err) {
+    console.error('Photo upload failed:', err);
+    alert('Photo upload failed — try a smaller photo or check your connection.');
   }
-  await saveDayField('photoDone', true);
 }
 
 function renderPeriodStrip() {
@@ -1873,15 +1901,18 @@ async function renderMessages(docs) {
     const isMe = msg.senderId === ME.id;
     const isLink = msg.text && (msg.text.startsWith('http://') || msg.text.startsWith('https://'));
     const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;align-self:' + (isMe?'flex-end':'flex-start');
+    wrapper.style.cssText = 'display:flex;flex-direction:column;max-width:78%;align-self:' + (isMe?'flex-end':'flex-start') + ';align-items:' + (isMe?'flex-end':'flex-start');
     if (!isMe) wrapper.innerHTML = `<div class="msg-sender">${msg.senderName}</div>`;
     const bubble = document.createElement('div');
     bubble.className = 'msg-bubble ' + (isMe?'me':'them');
+    bubble.style.maxWidth = '100%';
     if (isLink) {
       const url = msg.text;
       let domain = '';
       try { domain = new URL(url).hostname; } catch(e){}
-      bubble.innerHTML = `<div class="link-card"><div class="link-card-title">🔗 Shared link</div><div class="link-card-url">${domain||url}</div></div><div style="margin-top:5px;font-size:11px;opacity:0.8"><a href="${url}" target="_blank" style="color:${isMe?'rgba(255,255,255,0.9)':'#7c9885'}">Open link →</a></div>`;
+      const ytId = getYouTubeId(url);
+      const thumb = ytId ? `<img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="Video thumbnail" style="width:100%;display:block;border-radius:8px 8px 0 0"/>` : '';
+      bubble.innerHTML = `<div class="link-card" style="padding:0;overflow:hidden">${thumb}<div style="padding:8px 10px"><div class="link-card-title">🔗 ${ytId ? 'YouTube video' : 'Shared link'}</div><div class="link-card-url">${domain||url}</div></div></div><div style="margin-top:5px;font-size:11px;opacity:0.8"><a href="${url}" target="_blank" style="color:${isMe?'rgba(255,255,255,0.9)':'#7c9885'}">Open link →</a></div>`;
     } else {
       bubble.textContent = msg.text || '';
     }
@@ -1936,12 +1967,17 @@ async function viewPhotoOnce(msgId, groupId, tapAreaEl, b64) {
 window.handleChatPhotoUpload = async (e) => {
   const file = e.target.files[0];
   if (!file || !activeGroupId) return;
-  const b64 = await compressImage(file);
-  await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
-    type: 'photo', subtype: 'chat', caption: '📷 Shared photo',
-    senderId: ME.id, senderName: ME.name,
-    b64, timestamp: serverTimestamp(), viewedBy: [],
-  });
+  try {
+    const b64 = await compressImage(file);
+    await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
+      type: 'photo', subtype: 'chat', caption: '📷 Shared photo',
+      senderId: ME.id, senderName: ME.name,
+      b64, timestamp: serverTimestamp(), viewedBy: [],
+    });
+  } catch (err) {
+    console.error('Chat photo upload failed:', err);
+    alert('Photo upload failed — try a smaller photo or check your connection.');
+  }
   e.target.value = '';
 };
 
