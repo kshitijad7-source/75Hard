@@ -2,2110 +2,2146 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="apple-mobile-web-app-title" content="75 Hard"/>
 <meta name="theme-color" content="#faf8f5"/>
 <title>75 Hard Tracker</title>
 <style>
+/* ── RESET & BASE ── */
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#faf8f5;color:#2c2c2a;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#faf8f5;color:#1a1a18}
 
-/* LOADING */
-#loading-screen{position:fixed;inset:0;background:#faf8f5;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000}
-.load-title{font-size:28px;font-weight:700;color:#2c2c2a}.load-title span{color:#7c9885}
-.load-sub{font-size:14px;color:#888780;margin-top:6px}
-.load-spinner{width:32px;height:32px;border:3px solid #e8e0d6;border-top-color:#7c9885;border-radius:50%;animation:spin 0.8s linear infinite;margin-top:24px}
+/* ── APP SHELL ── */
+#app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative;overflow:hidden}
+
+/* ── LOADING ── */
+#loading{position:fixed;inset:0;background:#faf8f5;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999}
+.spin{width:36px;height:36px;border:3px solid #e8e0d6;border-top-color:#7c9885;border-radius:50%;animation:spin 0.8s linear infinite;margin-top:20px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.load-title{font-size:28px;font-weight:800;letter-spacing:-1px}
+.load-title span{color:#7c9885}
 
-/* NOTIFICATION BANNER */
-#notif-banner{position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;background:#2c2c2a;color:#fff;padding:12px 16px;font-size:13px;z-index:500;display:none;align-items:center;gap:10px;border-radius:0 0 12px 12px}
-#notif-banner.show{display:flex}
-.notif-x{margin-left:auto;font-size:18px;cursor:pointer;color:#888780}
+/* ── NOTIFICATION BANNER ── */
+#notif{position:fixed;top:0;left:0;right:0;max-width:480px;margin:0 auto;background:#1a1a18;color:#fff;padding:14px 16px;font-size:13px;z-index:900;display:none;border-radius:0 0 14px 14px;align-items:center;gap:10px}
+#notif.show{display:flex}
+.notif-close{margin-left:auto;font-size:20px;cursor:pointer;line-height:1;color:#888}
 
-/* APP SHELL */
-#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
-#screens{flex:1;overflow:hidden;position:relative}
-.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transition:opacity 0.15s}
-.screen.active{opacity:1;pointer-events:all}
-.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+.screen.active{display:flex}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
 
-/* BOTTOM NAV */
-#bottom-nav{background:#faf8f5;border-top:1px solid #e8e0d6;display:flex;padding:8px 0 max(12px,env(safe-area-inset-bottom));flex-shrink:0}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px 0;border:none;background:none}
-.nav-icon{font-size:20px;color:#b4b2a9}
-.nav-label{font-size:10px;color:#b4b2a9;font-weight:500}
-.nav-btn.active .nav-icon,.nav-btn.active .nav-label{color:#7c9885}
-.nav-btn.active .nav-label{font-weight:700}
-.nav-badge{position:relative;display:inline-block}
-.nav-badge::after{content:'';position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;background:#c0392b;border:1.5px solid #faf8f5;display:none}
-.nav-badge.has-badge::after{display:block}
-
-/* TOPBAR */
-.topbar{padding:10px 16px 6px;background:#faf8f5;flex-shrink:0;border-bottom:1px solid #e8e0d6}
+/* ── TOP BAR ── */
+.topbar{padding:12px 16px 8px;background:#faf8f5;border-bottom:1px solid #ede8e1;flex-shrink:0}
 .topbar-row{display:flex;align-items:center;justify-content:space-between}
-.app-name{font-size:18px;font-weight:700;color:#2c2c2a;letter-spacing:-0.3px}
-.app-name span{color:#7c9885}
-.user-pill{font-size:11px;background:#eaf3de;color:#3b6d11;padding:3px 10px;border-radius:20px;font-weight:600}
+.app-logo{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:#1a1a18}
+.app-logo span{color:#7c9885}
+.user-chip{background:#eaf3de;color:#2d6a2d;font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px}
 
-/* GROUP SWITCHER */
-.group-switcher{display:flex;gap:5px;padding:8px 16px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid #e8e0d6}
-.group-switcher::-webkit-scrollbar{display:none}
-.g-tab{padding:5px 12px;border-radius:20px;border:1px solid #e8e0d6;background:#fff;font-size:11px;font-weight:500;color:#888780;white-space:nowrap;flex-shrink:0;cursor:pointer;position:relative}
-.g-tab.active{background:#7c9885;color:#fff;border-color:#7c9885}
-.g-tab .g-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;background:#c0392b;border:1.5px solid #faf8f5;display:none}
-.g-tab .g-dot.show{display:block}
-.g-tab-join{color:#7c9885;border-color:#7c9885;background:#fff}
+/* ── GROUP TABS ── */
+.group-tabs{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid #ede8e1;scrollbar-width:none}
+.group-tabs::-webkit-scrollbar{display:none}
+.gtab{padding:5px 13px;border-radius:20px;border:1.5px solid #ede8e1;background:#fff;font-size:11px;font-weight:600;color:#888;cursor:pointer;white-space:nowrap;flex-shrink:0;position:relative;transition:all 0.15s}
+.gtab.active{background:#7c9885;color:#fff;border-color:#7c9885}
+.gtab .unread-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;background:#e53935;border:2px solid #faf8f5;display:none}
+.gtab .unread-dot.show{display:block}
+.gtab-join{color:#7c9885;border-color:#7c9885}
 
-/* SECTION LABEL */
-.sec-label{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.08em;padding:10px 16px 5px}
+/* ── SECTION LABEL ── */
+.slabel{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.08em;padding:10px 16px 5px}
 
-/* CARDS */
-.card{background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:12px 14px;margin:0 16px 8px}
+/* ── HERO ── */
+.hero{margin:10px 16px 8px;background:linear-gradient(135deg,#7c9885,#5a7a65);border-radius:18px;padding:16px 18px;color:#fff}
+.hero-row{display:flex;justify-content:space-between;align-items:flex-start}
+.hero-day{font-size:52px;font-weight:900;line-height:1;color:#fff;letter-spacing:-2px}
+.hero-label{font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.08em;margin-top:2px}
+.streak-badge{background:rgba(255,255,255,0.2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;color:#fff}
+.hero-prog-track{background:rgba(255,255,255,0.25);border-radius:100px;height:5px;overflow:hidden;margin-top:12px}
+.hero-prog-fill{height:100%;background:#fff;border-radius:100px;transition:width 0.5s ease}
+.hero-prog-text{font-size:10px;opacity:0.8;margin-top:4px}
 
-/* BUTTONS */
-.btn-primary{width:100%;padding:12px;border-radius:12px;background:#7c9885;color:#fff;font-size:15px;font-weight:600;border:none;cursor:pointer}
-.btn-primary:active{opacity:0.85}
-.btn-secondary{padding:8px 16px;border-radius:10px;background:#f5f3ef;border:1px solid #e8e0d6;color:#2c2c2a;font-size:13px;font-weight:500;cursor:pointer}
-.btn-danger{color:#c0392b;background:none;border:none;font-size:13px;cursor:pointer}
+/* ── CARDS ── */
+.card{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:13px 14px;margin:0 16px 8px}
+.card.done{background:#f0fdf4;border-color:#a7f3d0}
+.card.grace{background:#fffbeb;border-color:#fcd34d}
+.card.blocked{opacity:0.75}
 
-/* FORM FIELDS */
-.field-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
-.field-label{font-size:11px;color:#888780;font-weight:500}
-.field-input{background:#f5f3ef;border:1px solid #e8e0d6;border-radius:8px;padding:9px 11px;font-size:14px;color:#2c2c2a;width:100%;outline:none}
-.field-input:focus{border-color:#7c9885}
-.field-select{background:#f5f3ef;border:1px solid #e8e0d6;border-radius:8px;padding:9px 11px;font-size:14px;color:#2c2c2a;width:100%;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888780' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
-.seg-row{display:flex;gap:6px}
-.seg-btn{flex:1;padding:8px;border-radius:8px;border:1px solid #e8e0d6;background:#f5f3ef;font-size:13px;font-weight:500;color:#888780;text-align:center;cursor:pointer}
-.seg-btn.sel{background:#d4e8da;border-color:#7c9885;color:#3b6d11}
-
-/* CHIPS */
-.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
-.chip{padding:5px 11px;border-radius:20px;border:1px solid #e8e0d6;background:#faf8f5;font-size:12px;font-weight:500;color:#444441;cursor:pointer}
-.chip.sel{background:#d4e8da;border-color:#7c9885;color:#3b6d11}
-
-/* ── SIGNUP SCREEN ── */
-#signup-screen{background:#faf8f5}
-.signup-wrap{padding:16px;display:flex;flex-direction:column;gap:12px}
-.signup-step-card{background:#fff;border:1px solid #e8e0d6;border-radius:16px;padding:16px}
-.step-eyebrow{font-size:10px;font-weight:700;color:#7c9885;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px}
-.step-title{font-size:15px;font-weight:700;color:#2c2c2a;margin-bottom:12px}
-.unit-row{display:flex;gap:6px}
-.meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.group-code-box{background:#eaf3de;border:1px solid #c0dd97;border-radius:10px;padding:12px;text-align:center;margin-bottom:10px}
-.group-code-val{font-size:24px;font-weight:700;color:#27500a;letter-spacing:0.2em;margin:4px 0}
-.group-code-hint{font-size:11px;color:#3b6d11}
-.or-line{text-align:center;font-size:11px;color:#b4b2a9;margin:8px 0}
-
-/* ── TODAY SCREEN ── */
-.day-hero{margin:10px 16px 8px;background:#7c9885;border-radius:18px;padding:16px}
-.day-hero-top{display:flex;justify-content:space-between;align-items:flex-start}
-.day-num{font-size:44px;font-weight:700;line-height:1;color:#fff}
-.day-of{font-size:11px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.06em;margin-top:2px}
-.streak-pill{background:rgba(255,255,255,0.22);border-radius:20px;padding:4px 11px;font-size:12px;font-weight:600;color:#fff}
-.prog-track{background:rgba(255,255,255,0.25);border-radius:100px;height:5px;overflow:hidden;margin-top:12px}
-.prog-fill{height:100%;background:#fff;border-radius:100px;transition:width 0.5s ease}
-.prog-text{font-size:11px;color:rgba(255,255,255,0.8);margin-top:4px}
-
-.task-list{padding:0 16px;display:flex;flex-direction:column;gap:7px}
-.task-card{background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:11px 13px}
-.task-card.done{background:#f0fdf4;border-color:#a7f3d0}
-.task-card.blocked{opacity:0.9}
-.task-top{display:flex;align-items:flex-start;gap:10px}
-.task-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;margin-top:1px}
-.task-info{flex:1}
-.task-name{font-size:13px;font-weight:600;color:#2c2c2a}
-.task-card.done .task-name{color:#3b6d11}
-.task-desc{font-size:11px;color:#b4b2a9;margin-top:2px}
-.task-card.done .task-desc{color:#6ee7b7}
-.task-check{width:22px;height:22px;border-radius:50%;border:2px solid #d3d1c7;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;cursor:pointer;transition:all 0.15s}
-.task-card.done .task-check{background:#16a34a;border-color:#16a34a;color:#fff}
-.task-card.blocked .task-check{background:#f5f3ef;cursor:not-allowed}
+/* ── TASK CARDS ── */
+.task-header{display:flex;align-items:flex-start;gap:10px}
+.task-icon{font-size:18px;width:24px;flex-shrink:0;margin-top:1px;text-align:center}
+.task-body{flex:1;min-width:0}
+.task-name{font-size:13px;font-weight:700;color:#1a1a18}
+.card.done .task-name{color:#166534}
+.task-sub{font-size:11px;color:#aaa;margin-top:2px;line-height:1.4}
+.card.done .task-sub{color:#4ade80}
+.task-check{width:24px;height:24px;border-radius:50%;border:2px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:transparent;margin-top:1px;cursor:pointer;transition:all 0.15s}
+.card.done .task-check{background:#16a34a;border-color:#16a34a;color:#fff}
 .task-expand{margin-top:10px}
-.blocked-hint{font-size:10px;color:#b4b2a9;font-style:italic;margin-top:5px}
 
-.workout-row{display:flex;gap:6px;margin-top:8px}
-.workout-select{flex:1.3;padding:7px 9px;border-radius:8px;border:1px solid #e8e0d6;background:#f5f3ef;font-size:12px;color:#2c2c2a;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%23888780' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
-.workout-mins{flex:0.9;padding:7px 9px;border-radius:8px;border:1px solid #e8e0d6;background:#f5f3ef;font-size:12px;color:#2c2c2a;outline:none}
+/* ── WORKOUT INPUTS ── */
+.workout-row{display:flex;gap:7px}
+.w-select{flex:1.5;padding:8px 10px;border-radius:9px;border:1.5px solid #ede8e1;background:#f5f3ef;font-size:12px;color:#1a1a18;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23888' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.w-mins{flex:1;padding:8px 10px;border-radius:9px;border:1.5px solid #ede8e1;background:#f5f3ef;font-size:12px;color:#1a1a18;outline:none}
+.w-hint{font-size:10px;color:#e59400;margin-top:5px}
 
-.water-row{display:flex;gap:5px;margin-top:8px}
-.bottle-btn{flex:1;border-radius:9px;border:2px solid #bfdbfe;background:#fff;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all 0.15s}
-.bottle-btn.filled{background:#dbeafe;border-color:#60a5fa}
-.bottle-emoji{font-size:18px}
-.bottle-num{font-size:9px;color:#1e40af;font-weight:600}
+/* ── WATER BOTTLES ── */
+.bottles{display:flex;gap:5px;margin-top:8px}
+.bottle{flex:1;border-radius:10px;border:2px solid #bae6fd;background:#f0f9ff;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;transition:all 0.15s}
+.bottle.full{background:#0ea5e9;border-color:#0284c7}
+.bottle-icon{font-size:20px}
+.bottle-label{font-size:8px;font-weight:700;color:#0369a1}
+.bottle.full .bottle-label{color:#fff}
 
-.book-row{display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:8px}
-.book-title-text{font-size:11px;color:#7c9885;font-style:italic;font-weight:500;flex:1}
-.book-finish-btn{font-size:10px;color:#3b6d11;background:#eaf3de;padding:3px 8px;border-radius:8px;font-weight:600;cursor:pointer;border:none;white-space:nowrap}
-.book-add-btn{font-size:11px;color:#7c9885;background:#f0fdf4;border:1px dashed #7c9885;padding:5px 10px;border-radius:8px;cursor:pointer;margin-top:6px;display:block;text-align:center}
+/* ── BOOK ROW ── */
+.book-info-row{display:flex;align-items:center;justify-content:space-between;margin-top:7px;gap:8px}
+.book-name{font-size:11px;color:#7c9885;font-style:italic;font-weight:600;flex:1}
+.book-done-btn{font-size:10px;background:#eaf3de;color:#2d6a2d;border:none;padding:4px 9px;border-radius:8px;font-weight:700;cursor:pointer;white-space:nowrap}
+.mark-read-btn{width:100%;margin-top:8px;padding:8px;border-radius:9px;background:#eaf3de;border:1.5px solid #a7f3d0;color:#166534;font-size:12px;font-weight:700;cursor:pointer}
 
-.diet-line{font-size:11px;color:#7c9885;font-style:italic;margin-top:3px}
+/* ── DIET LINE ── */
+.diet-plan{font-size:11px;color:#7c9885;font-style:italic;margin-top:3px}
 
-.photo-upload-area{margin-top:8px;background:#f5f3ef;border:1.5px dashed #b4b2a9;border-radius:10px;padding:12px;text-align:center;cursor:pointer}
-.photo-upload-area:active{background:#eaf3de;border-color:#7c9885}
-.photo-upload-label{font-size:12px;color:#7c9885;font-weight:600}
-.photo-upload-hint{font-size:10px;color:#888780;margin-top:2px}
-#photo-file-input{display:none}
+/* ── PHOTO UPLOAD ── */
+.photo-area{margin-top:9px;background:#f5f3ef;border:2px dashed #ccc;border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.15s}
+.photo-area:active{background:#eaf3de;border-color:#7c9885}
+.photo-area-icon{font-size:22px;margin-bottom:3px}
+.photo-area-label{font-size:12px;font-weight:700;color:#7c9885}
+.photo-area-hint{font-size:10px;color:#aaa;margin-top:2px}
 
-.period-strip{margin:0 16px 6px;background:#fbeaf0;border:1px solid #f4c0d1;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
-.period-left{font-size:12px;color:#72243e;font-weight:500}
-.period-date{font-size:10px;color:#993556;margin-top:1px}
-.period-days-big{font-size:20px;font-weight:700;color:#993556}
-.period-days-lbl{font-size:10px;color:#993556;font-weight:400}
+/* ── GRACE BANNER ── */
+.grace-banner{margin:0 16px 8px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:11px 13px}
+.grace-title{font-size:12px;font-weight:700;color:#92400e}
+.grace-body{font-size:11px;color:#92400e;margin-top:2px;line-height:1.4}
 
-/* GRACE PERIOD */
-.grace-banner{margin:8px 16px;background:#fef3c7;border:1px solid #fcd34d;border-radius:12px;padding:11px 13px}
-.grace-title{font-size:12px;font-weight:700;color:#92400e;margin-bottom:3px}
-.grace-body{font-size:11px;color:#92400e;line-height:1.4}
-.past-day-section{margin-bottom:6px}
-.past-day-label{font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.07em;padding:8px 16px 4px}
-.past-day-label .days-left{color:#92400e;font-weight:600;text-transform:none;letter-spacing:0}
+/* ── PERIOD STRIP ── */
+.period-strip{margin:0 16px 8px;background:#fdf2f8;border:1.5px solid #f0abcc;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.period-left-text{font-size:12px;font-weight:600;color:#9d174d}
+.period-date-text{font-size:10px;color:#be185d;margin-top:1px}
+.period-days-num{font-size:22px;font-weight:900;color:#9d174d;line-height:1}
+.period-days-unit{font-size:10px;color:#be185d}
 
-/* DAY DETAIL POPUP (Progress screen) */
-.day-detail{margin:0 16px 8px;background:#fff;border:1px solid #e8e0d6;border-radius:13px;padding:13px;display:none}
-.day-detail.show{display:block}
-.day-detail-title{font-size:13px;font-weight:700;color:#2c2c2a;margin-bottom:2px}
-.day-detail-badge{font-size:11px;font-weight:600;margin-bottom:10px;display:inline-block}
-.detail-task-row{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f5f3ef}
-.detail-task-row:last-child{border-bottom:none}
-.detail-task-check{width:18px;height:18px;border-radius:50%;border:1.5px solid #d3d1c7;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0;margin-top:1px}
-.detail-task-check.done{background:#639922;border-color:#639922;color:#fff}
-.detail-task-name{font-size:12px;font-weight:600;color:#2c2c2a}
-.detail-task-meta{font-size:11px;color:#888780;margin-top:1px}
+/* ── WELLNESS CARD ── */
+.wellness-locked{text-align:center;font-size:12px;color:#aaa;font-style:italic;padding:8px 0}
+.w-section{margin-bottom:10px}
+.w-section:last-of-type{margin-bottom:0}
+.w-sec-label{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{padding:5px 11px;border-radius:20px;border:1.5px solid #ede8e1;background:#faf8f5;font-size:11px;font-weight:600;color:#555;cursor:pointer;transition:all 0.15s}
+.chip.sel{background:#d4e8da;border-color:#7c9885;color:#166534}
+.sleep-row{display:flex;gap:7px;align-items:center}
+.sleep-input{width:70px;padding:7px 10px;border-radius:9px;border:1.5px solid #ede8e1;background:#f5f3ef;font-size:13px;color:#1a1a18;outline:none}
+.w-textarea{width:100%;padding:9px 11px;border-radius:9px;border:1.5px solid #ede8e1;background:#f5f3ef;font-size:12px;color:#1a1a18;resize:none;height:54px;outline:none;margin-top:4px}
+.btn-save{width:100%;padding:12px;border-radius:11px;background:#7c9885;color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-top:8px;transition:opacity 0.15s}
+.btn-save:active{opacity:0.85}
 
-.phase-legend{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px;margin-bottom:8px}
-.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#444441}
-.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-
-.wellness-card{margin:0 16px 16px;background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:14px}
-.wellness-locked{text-align:center;font-size:12px;color:#b4b2a9;font-style:italic;padding:8px 0}
-.w-sec{margin-bottom:10px}
-.w-sec-label{font-size:10px;font-weight:700;color:#888780;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
-.sleep-input-row{display:flex;gap:6px;align-items:center}
-.sleep-hrs-input{width:70px;padding:6px 9px;border-radius:8px;border:1px solid #e8e0d6;background:#f5f3ef;font-size:13px;color:#2c2c2a;outline:none}
-.w-textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid #e8e0d6;background:#f5f3ef;font-size:12px;color:#2c2c2a;resize:none;height:52px;outline:none;margin-top:4px}
-
-/* ── PROGRESS SCREEN ── */
-.compare-card{background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:13px;margin:0 16px 8px}
-.cmp-person{margin-bottom:10px}
+/* ── COMPARE CARD ── */
+.compare-card{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:13px 14px;margin:0 16px 8px}
+.cmp-person{margin-bottom:9px}
 .cmp-person:last-child{margin-bottom:0}
-.cmp-top{display:flex;align-items:center;gap:7px;margin-bottom:5px}
-.cmp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.cmp-name{font-size:12px;font-weight:600;color:#2c2c2a;flex:1}
-.cmp-count{font-size:12px;font-weight:600;color:#888780}
-.cmp-bar-wrap{background:#f1efe8;border-radius:100px;height:7px;overflow:hidden;margin-bottom:4px}
-.cmp-bar{height:100%;border-radius:100px;transition:width 0.4s ease}
-.cmp-book{font-size:10px;color:#7c9885;font-style:italic}
+.cmp-top{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.cmp-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.cmp-name{font-size:12px;font-weight:700;color:#1a1a18;flex:1}
+.cmp-count{font-size:12px;font-weight:700;color:#888}
+.cmp-bar-track{background:#f1efe8;border-radius:100px;height:7px;overflow:hidden}
+.cmp-bar-fill{height:100%;border-radius:100px;transition:width 0.4s ease}
+.cmp-book{font-size:10px;color:#7c9885;font-style:italic;margin-top:3px}
 
-.view-toggle{display:flex;background:#f1efe8;border-radius:10px;padding:2px;margin:0 16px 8px}
-.view-btn{flex:1;padding:6px;border-radius:8px;font-size:11px;font-weight:600;color:#888780;text-align:center;cursor:pointer;border:none;background:none}
-.view-btn.active{background:#fff;color:#2c2c2a}
+/* ── VIEW TOGGLE ── */
+.view-toggle{display:flex;background:#f1efe8;border-radius:10px;padding:3px;margin:0 16px 8px}
+.vbtn{flex:1;padding:6px;border-radius:7px;font-size:11px;font-weight:700;color:#888;text-align:center;cursor:pointer;border:none;background:none;transition:all 0.15s}
+.vbtn.active{background:#fff;color:#1a1a18}
 
+/* ── DOT GRID ── */
 .dot-grid{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;padding:0 16px;margin-bottom:8px}
-.dot{aspect-ratio:1;border-radius:3px;background:#f1efe8;display:flex;align-items:center;justify-content:center;font-size:7px;color:#b4b2a9}
+.dot{aspect-ratio:1;border-radius:4px;background:#f1efe8;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#bbb;cursor:default;transition:transform 0.1s}
 .dot.done{background:#7c9885;color:#fff}
-.dot.today{background:#faf8f5;border:1.5px solid #7c9885;color:#7c9885;font-weight:700}
-.dot.future{background:#faf8f5}
+.dot.grace-dot{background:#fbbf24;color:#78350f}
+.dot.today-dot{background:#fff;border:2px solid #7c9885;color:#7c9885;font-weight:900}
+.dot.future{background:#f5f5f5;color:#ddd}
+.dot.clickable{cursor:pointer}
+.dot.clickable:active{transform:scale(0.9)}
 
+/* ── DAY DETAIL POPUP ── */
+.day-detail-card{margin:0 16px 8px;background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:13px 14px;display:none}
+.day-detail-card.show{display:block}
+.day-detail-title{font-size:13px;font-weight:700;color:#1a1a18;margin-bottom:3px}
+.day-detail-badge{font-size:11px;font-weight:700;margin-bottom:9px;display:block}
+.detail-task{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid #f5f3ef}
+.detail-task:last-child{border-bottom:none}
+.detail-check{width:18px;height:18px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;flex-shrink:0;margin-top:1px}
+.detail-check.done{background:#16a34a;border-color:#16a34a;color:#fff}
+.detail-task-name{font-size:12px;font-weight:600;color:#1a1a18}
+.detail-task-meta{font-size:10px;color:#888;margin-top:1px}
+
+/* ── CALENDAR ── */
 .cal-wrap{padding:0 16px;margin-bottom:8px}
-.cal-month-label{font-size:12px;font-weight:700;color:#2c2c2a;text-align:center;margin-bottom:5px}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:8px}
-.cal-head{font-size:8px;color:#888780;text-align:center;font-weight:600;padding:2px 0}
-.cal-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#2c2c2a}
-.cal-cell.done{background:#7c9885;color:#fff}
-.cal-cell.today{background:#faf8f5;border:1.5px solid #7c9885;color:#7c9885;font-weight:700}
-.cal-cell.future{color:#d3d1c7}
-.cal-cell.empty{background:transparent}
-.finish-pill{background:#eaf3de;border:1px solid #c0dd97;border-radius:8px;padding:7px;text-align:center;font-size:11px;color:#27500a;margin-bottom:8px}
+.cal-month-hd{font-size:12px;font-weight:700;color:#1a1a18;text-align:center;margin-bottom:5px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-head{font-size:8px;color:#aaa;text-align:center;font-weight:700;padding:2px 0}
+.cal-cell{aspect-ratio:1;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#1a1a18;cursor:default}
+.cal-cell.c-done{background:#7c9885;color:#fff}
+.cal-cell.c-grace{background:#fbbf24;color:#78350f}
+.cal-cell.c-today{background:#fff;border:2px solid #7c9885;color:#7c9885}
+.cal-cell.c-future{color:#ccc}
+.cal-cell.c-empty{background:transparent}
+.cal-cell.c-click{cursor:pointer}
+.phase-pip{width:4px;height:4px;border-radius:50%;margin-top:1px}
+.phase-legend{display:flex;flex-wrap:wrap;gap:7px;padding:0 16px;margin-bottom:8px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:#555}
+.legend-pip{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.finish-pill{background:#eaf3de;border:1.5px solid #a7f3d0;border-radius:9px;padding:8px;text-align:center;font-size:11px;color:#166534;margin-bottom:8px}
 
-.stats-card{background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:13px;margin:0 16px 8px}
+/* ── BODY STATS ── */
+.stats-card{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:13px 14px;margin:0 16px 8px}
 .stats-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.stats-title{font-size:12px;font-weight:700;color:#2c2c2a}
-.remind-badge{font-size:10px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:8px;font-weight:600}
-.stat-boxes{display:flex;gap:6px}
-.stat-box{flex:1;background:#f5f3ef;border-radius:9px;padding:8px}
-.stat-box-lbl{font-size:9px;color:#888780;margin-bottom:2px}
-.stat-box-val{font-size:14px;font-weight:700;color:#2c2c2a}
-.stat-box-chg{font-size:9px;color:#3b6d11;margin-top:1px}
-.meas-boxes{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.meas-box{background:#f5f3ef;border-radius:9px;padding:8px}
-.meas-box-lbl{font-size:9px;color:#888780;margin-bottom:2px}
-.meas-box-val{font-size:12px;font-weight:600;color:#2c2c2a}
-.meas-box-chg{font-size:9px;color:#3b6d11;margin-top:1px}
+.stats-title{font-size:12px;font-weight:700;color:#1a1a18}
+.due-badge{font-size:10px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:8px;font-weight:700}
+.stat-boxes{display:flex;gap:6px;flex-wrap:wrap}
+.stat-box{flex:1;min-width:60px;background:#f5f3ef;border-radius:9px;padding:8px 9px}
+.stat-box-lbl{font-size:9px;color:#aaa;margin-bottom:2px}
+.stat-box-val{font-size:14px;font-weight:800;color:#1a1a18}
+.stat-box-chg{font-size:9px;color:#16a34a;margin-top:1px;font-weight:600}
+.stat-box-chg.neg{color:#dc2626}
+.meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.meas-box{background:#f5f3ef;border-radius:9px;padding:8px 9px}
+.meas-lbl{font-size:9px;color:#aaa;margin-bottom:2px}
+.meas-val{font-size:11px;font-weight:700;color:#1a1a18}
+.meas-chg{font-size:9px;color:#16a34a;font-weight:600}
+.meas-chg.neg{color:#dc2626}
+.log-btn{width:100%;margin-top:9px;padding:9px;border-radius:9px;background:#7c9885;color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer}
 
-.book-list-card{background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:13px;margin:0 16px 16px}
-.book-list-item{display:flex;align-items:center;gap:9px;background:#f5f3ef;border-radius:9px;padding:8px 10px;margin-bottom:6px}
-.book-list-item:last-child{margin-bottom:0}
-.book-list-item.current{background:#eaf3de}
-.book-num{font-size:11px;font-weight:700;color:#7c9885;width:18px;flex-shrink:0}
-.book-list-title{font-size:12px;font-weight:600;color:#2c2c2a}
-.book-list-item.current .book-list-title{color:#3b6d11}
-.book-list-sub{font-size:10px;color:#888780;margin-top:1px}
+/* ── BOOK LIST ── */
+.book-list-card{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:13px 14px;margin:0 16px 16px}
+.book-item{display:flex;align-items:flex-start;gap:9px;background:#f5f3ef;border-radius:9px;padding:8px 10px;margin-bottom:6px}
+.book-item:last-child{margin-bottom:0}
+.book-item.current{background:#eaf3de}
+.book-num{font-size:11px;font-weight:800;color:#7c9885;width:18px;flex-shrink:0;margin-top:1px}
+.book-item-title{font-size:12px;font-weight:700;color:#1a1a18}
+.book-item.current .book-item-title{color:#166534}
+.book-item-sub{font-size:10px;color:#888;margin-top:1px}
 
-/* ── CHAT SCREEN ── */
-.chat-body{display:flex;flex-direction:column;flex:1;overflow:hidden}
+/* ── CHAT ── */
+.chat-body{display:flex;flex-direction:column;flex:1;min-height:0}
 .chat-messages{flex:1;overflow-y:auto;padding:10px 16px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
-.msg-bubble{max-width:78%;padding:8px 11px;border-radius:14px;font-size:13px;line-height:1.45}
-.msg-bubble.them{background:#fff;border:1px solid #e8e0d6;color:#2c2c2a;border-radius:14px 14px 14px 4px;align-self:flex-start}
-.msg-bubble.me{background:#7c9885;color:#fff;border-radius:14px 14px 4px 14px;align-self:flex-end}
-.msg-sender{font-size:10px;color:#888780;margin-bottom:2px;padding-left:2px}
-.msg-time{font-size:9px;opacity:0.55;margin-top:3px;text-align:right}
-.msg-time.them-time{text-align:left;padding-left:2px}
-.link-card{background:#eaf3de;border:1px solid #c0dd97;border-radius:9px;padding:8px 10px;margin-top:5px}
-.link-card-title{font-size:11px;font-weight:600;color:#27500a}
-.link-card-url{font-size:10px;color:#3b6d11;margin-top:1px}
-.sys-message{text-align:center;font-size:11px;color:#888780;font-style:italic;padding:2px 0}
-.photo-msg-card{background:#fff;border:1px solid #e8e0d6;border-radius:14px;overflow:hidden;max-width:78%;align-self:flex-start}
-.photo-msg-card.mine{align-self:flex-end;border-radius:14px 14px 4px 14px}
-.photo-card-top{display:flex;align-items:center;gap:7px;padding:8px 11px 5px}
-.photo-avatar-sm{width:22px;height:22px;border-radius:50%;background:#d4e8da;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#3b6d11;flex-shrink:0}
-.photo-card-name{font-size:11px;font-weight:600;color:#2c2c2a}
-.photo-card-day{font-size:9px;color:#888780}
-.photo-tap-area{background:#e8e0d6;padding:18px;text-align:center;cursor:pointer}
-.photo-tap-area:active{background:#d4c8ba}
-.photo-tap-text{font-size:12px;font-weight:600;color:#2c2c2a}
-.photo-tap-hint{font-size:10px;color:#888780;margin-top:2px}
-.photo-img-area{max-width:100%}
-.photo-img-area img{width:100%;display:block;max-height:200px;object-fit:cover}
-.photo-viewed-area{background:#f5f3ef;padding:14px;text-align:center}
-.photo-viewed-text{font-size:11px;color:#b4b2a9;font-style:italic}
-.photo-expired-area{background:#fef2f2;padding:10px;text-align:center}
-.photo-expired-text{font-size:11px;color:#b4b2a9;font-style:italic}
+.msg-wrap{display:flex;flex-direction:column;max-width:75%}
+.msg-wrap.me{align-self:flex-end;align-items:flex-end}
+.msg-wrap.them{align-self:flex-start;align-items:flex-start}
+.msg-sender-name{font-size:10px;color:#aaa;margin-bottom:3px;padding:0 4px}
+.bubble{padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.45;word-break:break-word}
+.bubble.me{background:#7c9885;color:#fff;border-radius:14px 14px 4px 14px}
+.bubble.them{background:#fff;border:1.5px solid #ede8e1;color:#1a1a18;border-radius:14px 14px 14px 4px}
+.msg-time{font-size:10px;color:#bbb;margin-top:3px;padding:0 4px}
+.sys-msg{text-align:center;font-size:11px;color:#aaa;font-style:italic;padding:2px 0;align-self:center}
 
-.chat-input-wrap{padding:8px 16px 10px;border-top:1px solid #e8e0d6;display:flex;gap:8px;align-items:center;flex-shrink:0}
-.photo-attach{width:34px;height:34px;border-radius:50%;background:#f5f3ef;border:1px solid #e8e0d6;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;cursor:pointer}
-.photo-attach:active{background:#e8e0d6}
-.chat-input{flex:1;padding:9px 13px;border-radius:22px;border:1px solid #e8e0d6;background:#fff;font-size:13px;color:#2c2c2a;outline:none}
+/* ── LINK CARD ── */
+.link-card{border-radius:10px;overflow:hidden;border:1.5px solid rgba(255,255,255,0.3);margin-bottom:5px;cursor:pointer}
+.bubble.them .link-card{border-color:#ede8e1}
+.link-thumb{width:100%;display:block;max-height:140px;object-fit:cover}
+.link-body{padding:7px 9px}
+.link-title{font-size:11px;font-weight:700;color:inherit}
+.link-url{font-size:10px;opacity:0.7;margin-top:1px}
+.link-open{font-size:11px;margin-top:5px;opacity:0.85}
+
+/* ── PHOTO MESSAGE ── */
+.photo-card{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;overflow:hidden;max-width:75%}
+.photo-card.mine{align-self:flex-end;border-radius:14px 14px 4px 14px}
+.photo-card.them{align-self:flex-start;border-radius:14px 14px 14px 4px}
+.photo-card-top{display:flex;align-items:center;gap:7px;padding:8px 11px 6px}
+.photo-av{width:24px;height:24px;border-radius:50%;background:#d4e8da;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#166534;flex-shrink:0}
+.photo-sender{font-size:11px;font-weight:700;color:#1a1a18}
+.photo-label{font-size:10px;color:#aaa}
+.photo-tap{background:#f5f3ef;border-top:1px solid #ede8e1;padding:18px;text-align:center;cursor:pointer;transition:background 0.15s}
+.photo-tap:active{background:#e8f4ea}
+.photo-tap-icon{font-size:24px;margin-bottom:4px}
+.photo-tap-text{font-size:12px;font-weight:700;color:#1a1a18}
+.photo-tap-hint{font-size:10px;color:#aaa;margin-top:2px}
+.photo-viewing{position:relative;background:#000}
+.photo-viewing img{width:100%;display:block;max-height:220px;object-fit:contain}
+.photo-countdown{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:12px;font-weight:700;padding:4px 9px;border-radius:20px}
+.photo-viewed{background:#f5f3ef;padding:14px;text-align:center;font-size:11px;color:#aaa;font-style:italic}
+.photo-expired{background:#fef2f2;padding:14px;text-align:center;font-size:11px;color:#aaa;font-style:italic}
+.chat-input-row{padding:8px 16px 10px;border-top:1.5px solid #ede8e1;display:flex;gap:7px;align-items:center;flex-shrink:0;background:#faf8f5}
+.chat-attach{width:36px;height:36px;border-radius:50%;background:#f5f3ef;border:1.5px solid #ede8e1;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;flex-shrink:0;transition:background 0.15s}
+.chat-attach:active{background:#e8f4ea}
+.chat-input{flex:1;padding:9px 14px;border-radius:22px;border:1.5px solid #ede8e1;background:#fff;font-size:13px;color:#1a1a18;outline:none}
 .chat-input:focus{border-color:#7c9885}
-.chat-send-btn{width:36px;height:36px;border-radius:50%;background:#7c9885;border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.chat-send-btn:active{opacity:0.8}
+.chat-send{width:36px;height:36px;border-radius:50%;background:#7c9885;border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity 0.15s}
+.chat-send:active{opacity:0.8}
 
-/* ── PROFILE SCREEN ── */
-.profile-hero{display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-bottom:1px solid #e8e0d6}
-.profile-avatar{width:52px;height:52px;border-radius:50%;background:#d4e8da;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#3b6d11;flex-shrink:0}
-.profile-name-big{font-size:17px;font-weight:700;color:#2c2c2a}
-.profile-diet-line{font-size:11px;color:#7c9885;font-style:italic;margin-top:2px}
+/* ── PROFILE ── */
+.profile-hero{display:flex;align-items:center;gap:14px;padding:14px 16px 12px;background:#fff;border-bottom:1.5px solid #ede8e1}
+.profile-av{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c9885,#5a7a65);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0}
+.profile-name{font-size:17px;font-weight:800;color:#1a1a18}
+.profile-diet{font-size:11px;color:#7c9885;font-style:italic;margin-top:3px}
+.code-box{background:#eaf3de;border:1.5px solid #a7f3d0;border-radius:12px;padding:12px 14px;margin:0 16px 8px;display:flex;align-items:center;justify-content:space-between}
+.code-label{font-size:10px;color:#2d6a2d;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px}
+.code-val{font-size:20px;font-weight:900;color:#166534;letter-spacing:0.15em}
+.copy-btn{background:#166534;color:#fff;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
 .wellness-history-row{display:flex;align-items:flex-start;gap:8px;background:#f5f3ef;border-radius:9px;padding:8px 10px;margin-bottom:6px}
 .wellness-history-row:last-child{margin-bottom:0}
-.wh-day{font-size:10px;font-weight:700;color:#7c9885;width:36px;flex-shrink:0;margin-top:2px}
+.wh-date{font-size:9px;font-weight:700;color:#7c9885;width:32px;flex-shrink:0;margin-top:2px}
 .wh-tags{display:flex;flex-wrap:wrap;gap:3px;flex:1}
-.wh-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:#eaf3de;color:#3b6d11;font-weight:500}
-.wh-sleep{background:#e8e0d6;color:#444441}
-.period-detail-card{background:#fbeaf0;border:1px solid #f4c0d1;border-radius:12px;padding:12px}
-.period-detail-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f9d0de}
+.wh-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:#eaf3de;color:#166534;font-weight:600}
+.wh-sleep{background:#e8e0d6;color:#444}
+.period-detail-box{background:#fdf2f8;border:1.5px solid #f0abcc;border-radius:12px;padding:12px 14px}
+.period-detail-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(240,171,204,0.3)}
 .period-detail-row:last-child{border-bottom:none}
-.period-detail-lbl{font-size:12px;color:#72243e;font-weight:500}
-.period-detail-val{font-size:13px;font-weight:700;color:#993556}
+.pd-label{font-size:12px;color:#9d174d;font-weight:600}
+.pd-val{font-size:12px;font-weight:800;color:#9d174d}
 .setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f5f3ef}
 .setting-row:last-child{border-bottom:none}
-.setting-lbl{font-size:13px;color:#2c2c2a}
-.setting-val{font-size:12px;color:#888780}
+.setting-label{font-size:13px;color:#1a1a18}
+.setting-val{font-size:12px;color:#888}
+.btn-danger{color:#dc2626;background:none;border:none;font-size:13px;font-weight:600;cursor:pointer;padding:0}
 
-/* MODALS */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;max-width:480px;margin:0 auto}
+/* ── SIGNUP ── */
+#signup{background:#faf8f5;overflow-y:auto}
+.signup-inner{padding:20px 16px 32px;display:flex;flex-direction:column;gap:12px}
+.signup-header{text-align:center;padding:8px 0 4px}
+.signup-title{font-size:28px;font-weight:900;letter-spacing:-1px}
+.signup-title span{color:#7c9885}
+.signup-sub{font-size:13px;color:#888;margin-top:4px}
+.signin-box{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:14px}
+.signin-title{font-size:13px;font-weight:700;color:#1a1a18;margin-bottom:4px}
+.signin-sub{font-size:11px;color:#888;margin-bottom:10px}
+.signin-row{display:flex;gap:8px}
+.step-card{background:#fff;border:1.5px solid #ede8e1;border-radius:14px;padding:14px}
+.step-eyebrow{font-size:10px;font-weight:700;color:#7c9885;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px}
+.step-title{font-size:15px;font-weight:800;color:#1a1a18;margin-bottom:12px}
+.field-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.field-group:last-child{margin-bottom:0}
+.field-label{font-size:11px;color:#888;font-weight:600}
+.field-input{padding:10px 12px;border-radius:9px;border:1.5px solid #ede8e1;background:#f5f3ef;font-size:14px;color:#1a1a18;width:100%;outline:none;transition:border-color 0.15s}
+.field-input:focus{border-color:#7c9885}
+.seg-row{display:flex;gap:6px}
+.seg-btn{flex:1;padding:9px;border-radius:9px;border:1.5px solid #ede8e1;background:#f5f3ef;font-size:12px;font-weight:700;color:#888;text-align:center;cursor:pointer;transition:all 0.15s}
+.seg-btn.sel{background:#d4e8da;border-color:#7c9885;color:#166534}
+.meas-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.group-code-box{background:#eaf3de;border:1.5px solid #a7f3d0;border-radius:12px;padding:12px;text-align:center;margin-bottom:10px}
+.group-code-eyebrow{font-size:10px;font-weight:700;color:#2d6a2d;margin-bottom:4px}
+.group-code-big{font-size:26px;font-weight:900;color:#166534;letter-spacing:0.2em}
+.group-code-hint{font-size:11px;color:#2d6a2d;margin-top:3px}
+.or-divider{text-align:center;font-size:11px;color:#bbb;margin:8px 0}
+.start-btn{width:100%;padding:15px;border-radius:13px;background:#7c9885;color:#fff;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:opacity 0.15s}
+.start-btn:active{opacity:0.85}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;max-width:480px;margin:0 auto}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal-sheet{background:#faf8f5;border-radius:20px 20px 0 0;padding:20px 20px max(20px,env(safe-area-inset-bottom));width:100%;transform:translateY(100%);transition:transform 0.3s ease}
+.modal-sheet{background:#faf8f5;border-radius:20px 20px 0 0;padding:20px 20px 32px;width:100%;transform:translateY(100%);transition:transform 0.3s ease}
 .modal-overlay.open .modal-sheet{transform:translateY(0)}
-.modal-handle{width:36px;height:4px;background:#d3d1c7;border-radius:2px;margin:0 auto 16px}
-.modal-title{font-size:16px;font-weight:700;color:#2c2c2a;margin-bottom:14px}
-.modal-actions{display:flex;gap:8px;margin-top:12px}
+.modal-handle{width:38px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:17px;font-weight:800;color:#1a1a18;margin-bottom:14px}
+.modal-btns{display:flex;gap:8px;margin-top:12px}
+.btn-cancel{flex:1;padding:11px;border-radius:10px;background:#f5f3ef;border:1.5px solid #ede8e1;color:#1a1a18;font-size:14px;font-weight:700;cursor:pointer}
+.btn-confirm{flex:2;padding:11px;border-radius:10px;background:#7c9885;color:#fff;font-size:14px;font-weight:700;border:none;cursor:pointer}
 
-/* JOIN GROUP */
-#join-modal .modal-sheet{padding-bottom:max(24px,env(safe-area-inset-bottom))}
+/* ── BOTTOM NAV ── */
+#bottom-nav{background:#fff;border-top:1.5px solid #ede8e1;display:flex;padding:8px 0 max(12px,env(safe-area-inset-bottom));flex-shrink:0}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:none;padding:2px 0;position:relative}
+.nav-btn-icon{font-size:21px;color:#ccc;transition:color 0.15s}
+.nav-btn-label{font-size:9px;color:#ccc;font-weight:600;transition:color 0.15s}
+.nav-btn.active .nav-btn-icon,.nav-btn.active .nav-btn-label{color:#7c9885}
+.nav-btn.active .nav-btn-label{font-weight:800}
+.nav-unread{position:absolute;top:0;right:calc(50% - 18px);width:8px;height:8px;border-radius:50%;background:#e53935;border:2px solid #fff;display:none}
+.nav-unread.show{display:block}
+
+/* ── UTIL ── */
+.hidden{display:none!important}
+.pb16{padding-bottom:16px}
 </style>
 </head>
 <body>
 
-<div id="loading-screen">
+<!-- LOADING -->
+<div id="loading">
   <div class="load-title">75 <span>Hard</span></div>
-  <div class="load-sub">Loading your tracker…</div>
-  <div class="load-spinner"></div>
+  <div class="spin"></div>
 </div>
 
-<div id="notif-banner">
-  <span id="notif-text">New message</span>
-  <span class="notif-x" onclick="closeNotif()">×</span>
+<!-- NOTIFICATION BANNER -->
+<div id="notif">
+  <span id="notif-text"></span>
+  <span class="notif-close" onclick="hideNotif()">×</span>
 </div>
 
+<!-- SIGNUP -->
+<div id="signup" style="display:none;flex:1;overflow-y:auto">
+  <div class="signup-inner">
+    <div class="signup-header">
+      <div class="signup-title">75 <span>Hard</span></div>
+      <div class="signup-sub">Set up your challenge tracker</div>
+    </div>
+
+    <!-- Already have account -->
+    <div class="signin-box">
+      <div class="signin-title">Already have an account?</div>
+      <div class="signin-sub">Enter your invite code to sign in on this device</div>
+      <div class="signin-row">
+        <input class="field-input" id="signin-code" placeholder="e.g. HRD-482" style="flex:1;text-transform:uppercase" maxlength="7"/>
+        <button class="btn-confirm" onclick="signinWithCode()" style="white-space:nowrap">Sign in</button>
+      </div>
+    </div>
+
+    <div class="or-divider">— or create a new profile —</div>
+
+    <!-- Step 1: Profile -->
+    <div class="step-card">
+      <div class="step-eyebrow">Step 1 — Profile</div>
+      <div class="step-title">About you</div>
+      <div class="field-group">
+        <div class="field-label">Your name</div>
+        <input class="field-input" id="su-name" placeholder="Enter your name" maxlength="20"/>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Your diet plan (one line)</div>
+        <input class="field-input" id="su-diet" placeholder="e.g. High protein, no sugar, no junk" maxlength="60"/>
+      </div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">Gender</div>
+        <div class="seg-row">
+          <div class="seg-btn" id="g-female" onclick="pickGender('female')">Female</div>
+          <div class="seg-btn" id="g-male" onclick="pickGender('male')">Male</div>
+          <div class="seg-btn" id="g-other" onclick="pickGender('other')">Other</div>
+        </div>
+      </div>
+      <div id="cycle-section" class="hidden" style="margin-top:10px">
+        <div class="field-group">
+          <div class="field-label">Cycle length (days)</div>
+          <input class="field-input" id="su-cycle" type="number" placeholder="e.g. 28" min="18" max="50"/>
+        </div>
+        <div class="field-group" style="margin-bottom:0">
+          <div class="field-label">Last period start date</div>
+          <input class="field-input" id="su-period" type="date"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Stats -->
+    <div class="step-card">
+      <div class="step-eyebrow">Step 2 — Starting stats</div>
+      <div class="step-title">Your baseline</div>
+      <div class="field-group">
+        <div class="field-label">Weight unit</div>
+        <div class="seg-row">
+          <div class="seg-btn sel" id="u-kg" onclick="pickUnit('kg')">kg</div>
+          <div class="seg-btn" id="u-lbs" onclick="pickUnit('lbs')">lbs</div>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Starting weight (number only)</div>
+        <input class="field-input" id="su-weight" type="number" step="0.1" placeholder="e.g. 62"/>
+      </div>
+      <div class="field-label" style="margin-bottom:6px">Body measurements (numbers only)</div>
+      <div class="meas-grid2">
+        <div class="field-group" style="margin-bottom:0"><div class="field-label">Chest</div><input class="field-input" id="su-chest" type="number" step="0.1" placeholder="e.g. 36"/></div>
+        <div class="field-group" style="margin-bottom:0"><div class="field-label">Waist</div><input class="field-input" id="su-waist" type="number" step="0.1" placeholder="e.g. 29"/></div>
+        <div class="field-group" style="margin-bottom:0"><div class="field-label">Hips</div><input class="field-input" id="su-hips" type="number" step="0.1" placeholder="e.g. 38"/></div>
+        <div class="field-group" style="margin-bottom:0"><div class="field-label">Arms</div><input class="field-input" id="su-arms" type="number" step="0.1" placeholder="e.g. 11"/></div>
+        <div class="field-group" style="margin-bottom:0;grid-column:span 2"><div class="field-label">Thighs</div><input class="field-input" id="su-thighs" type="number" step="0.1" placeholder="e.g. 22"/></div>
+      </div>
+    </div>
+
+    <!-- Step 3: Group -->
+    <div class="step-card">
+      <div class="step-eyebrow">Step 3 — Your group</div>
+      <div class="step-title">Create or join</div>
+      <div class="group-code-box">
+        <div class="group-code-eyebrow">Your invite code</div>
+        <div class="group-code-big" id="su-code">---</div>
+        <div class="group-code-hint">Share this code with friends to join your group</div>
+      </div>
+      <div class="or-divider">— or join a friend's group —</div>
+      <div class="field-group" style="margin-bottom:0">
+        <div class="field-label">Enter a friend's invite code</div>
+        <input class="field-input" id="su-join" placeholder="e.g. HRD-999" style="text-transform:uppercase" maxlength="7"/>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="completeSignup()">Start my 75 Hard 💪</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
 <div id="app" style="display:none">
-  <div id="screens">
 
-    <!-- SIGNUP -->
-    <div class="screen active" id="signup-screen">
-      <div class="scroll">
-        <div class="signup-wrap">
-          <div style="text-align:center;padding:16px 0 4px">
-            <div style="font-size:26px;font-weight:700;color:#2c2c2a">75 <span style="color:#7c9885">Hard</span></div>
-            <div style="font-size:13px;color:#888780;margin-top:4px">Set up your profile to get started</div>
-            <div style="margin-top:12px;background:#fff;border:1px solid #e8e0d6;border-radius:14px;padding:14px">
-              <div style="font-size:12px;font-weight:600;color:#2c2c2a;margin-bottom:8px">Already have an account?</div>
-              <div style="font-size:11px;color:#888780;margin-bottom:10px">Enter your invite code to sign in on this device</div>
-              <div style="display:flex;gap:8px">
-                <input class="field-input" id="login-code" placeholder="Your code e.g. HRD-482" style="text-transform:uppercase;flex:1" maxlength="7"/>
-                <button class="btn-primary" onclick="loginWithCode()" style="width:auto;padding:9px 14px;font-size:13px">Sign in</button>
-              </div>
-            </div>
-            <div style="font-size:12px;color:#b4b2a9;margin:10px 0 4px">— or create a new profile below —</div>
-          </div>
-
-          <div class="signup-step-card">
-            <div class="step-eyebrow">Step 1 — About you</div>
-            <div class="step-title">Your profile</div>
-            <div class="field-group"><div class="field-label">Your name</div><input class="field-input" id="su-name" placeholder="Enter your name" maxlength="20"/></div>
-            <div class="field-group"><div class="field-label">Your diet plan (one line)</div><input class="field-input" id="su-diet" placeholder="e.g. High protein, no sugar, no junk" maxlength="60"/></div>
-            <div class="field-group">
-              <div class="field-label">Gender</div>
-              <div class="seg-row">
-                <div class="seg-btn" onclick="selectGender('female',this)">Female</div>
-                <div class="seg-btn" onclick="selectGender('male',this)">Male</div>
-                <div class="seg-btn" onclick="selectGender('other',this)">Other</div>
-              </div>
-            </div>
-            <div id="cycle-fields" style="display:none">
-              <div class="field-group"><div class="field-label">Cycle length (days)</div><input class="field-input" id="su-cycle" placeholder="e.g. 28" type="number" min="20" max="45"/></div>
-              <div class="field-group" style="margin-bottom:0"><div class="field-label">Last period start date</div><input class="field-input" id="su-period" type="date"/></div>
-            </div>
-          </div>
-
-          <div class="signup-step-card">
-            <div class="step-eyebrow">Step 2 — Starting stats</div>
-            <div class="step-title">Your baseline</div>
-            <div class="field-group">
-              <div class="field-label">Weight unit</div>
-              <div class="seg-row">
-                <div class="seg-btn sel" id="unit-kg" onclick="selectUnit('kg')">kg</div>
-                <div class="seg-btn" id="unit-lbs" onclick="selectUnit('lbs')">lbs</div>
-              </div>
-            </div>
-            <div class="field-group"><div class="field-label">Starting weight (numbers only)</div><input class="field-input" id="su-weight" placeholder="e.g. 62" type="number" step="0.1"/></div>
-            <div class="field-label" style="margin-bottom:6px">Body measurements (numbers only)</div>
-            <div class="meas-grid">
-              <div class="field-group" style="margin-bottom:0"><div class="field-label">Chest</div><input class="field-input" id="su-chest" placeholder="e.g. 36" type="number" step="0.1"/></div>
-              <div class="field-group" style="margin-bottom:0"><div class="field-label">Waist</div><input class="field-input" id="su-waist" placeholder="e.g. 29" type="number" step="0.1"/></div>
-              <div class="field-group" style="margin-bottom:0"><div class="field-label">Hips</div><input class="field-input" id="su-hips" placeholder="e.g. 38" type="number" step="0.1"/></div>
-              <div class="field-group" style="margin-bottom:0"><div class="field-label">Arms</div><input class="field-input" id="su-arms" placeholder="e.g. 11" type="number" step="0.1"/></div>
-              <div class="field-group" style="margin-bottom:0;grid-column:span 2"><div class="field-label">Thighs</div><input class="field-input" id="su-thighs" placeholder="e.g. 22" type="number" step="0.1"/></div>
-            </div>
-          </div>
-
-          <div class="signup-step-card">
-            <div class="step-eyebrow">Step 3 — Your group</div>
-            <div class="step-title">Create or join a group</div>
-            <div class="group-code-box">
-              <div style="font-size:11px;color:#3b6d11;font-weight:600">Your invite code</div>
-              <div class="group-code-val" id="su-invite-code">---</div>
-              <div class="group-code-hint">Share this with friends so they can join your group</div>
-            </div>
-            <div class="or-line">— or join a friend's group —</div>
-            <div class="field-group" style="margin-bottom:0"><div class="field-label">Enter invite code</div><input class="field-input" id="su-join-code" placeholder="e.g. HRD-482" style="text-transform:uppercase" maxlength="7"/></div>
-          </div>
-
-          <button class="btn-primary" onclick="completeSignup()">Start my 75 Hard 💪</button>
-          <div style="height:8px"></div>
-        </div>
+  <!-- TODAY SCREEN -->
+  <div class="screen active" id="screen-today">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="app-logo">75 <span>Hard</span></div>
+        <div class="user-chip" id="today-chip">Day 1</div>
       </div>
     </div>
-
-    <!-- TODAY -->
-    <div class="screen" id="today-screen">
-      <div class="topbar">
-        <div class="topbar-row">
-          <div class="app-name">75 <span>Hard</span></div>
-          <div class="user-pill" id="today-pill">Day 1</div>
-        </div>
-      </div>
-      <div class="scroll" id="today-scroll">
-        <div class="day-hero">
-          <div class="day-hero-top">
-            <div><div class="day-num" id="hero-day">1</div><div class="day-of">day of 75</div></div>
-            <div class="streak-pill" id="hero-streak">🔥 0 streak</div>
-          </div>
-          <div class="prog-track"><div class="prog-fill" id="hero-prog" style="width:0%"></div></div>
-          <div class="prog-text" id="hero-prog-text">0% complete</div>
-        </div>
-
-        <div id="grace-banner-wrap"></div>
-
-        <div class="sec-label" id="tasks-label">Today's tasks</div>
-        <div class="task-list" id="task-list"></div>
-
-        <div id="past-days-wrap"></div>
-
-        <div id="period-strip-wrap"></div>
-
-        <div class="sec-label" id="checkin-label">Today's check-in</div>
-        <div class="wellness-card" id="wellness-card">
-          <div class="wellness-locked" id="wellness-locked">Complete all 6 tasks to unlock your daily check-in</div>
-          <div id="wellness-form" style="display:none">
-            <div class="w-sec">
-              <div class="w-sec-label">⚡ Energy</div>
-              <div class="chips" id="energy-chips">
-                <div class="chip" onclick="selectChip(this,'energy')">Low</div>
-                <div class="chip" onclick="selectChip(this,'energy')">Moderate</div>
-                <div class="chip" onclick="selectChip(this,'energy')">High</div>
-              </div>
-            </div>
-            <div class="w-sec">
-              <div class="w-sec-label">😊 Emotion</div>
-              <div class="chips" id="emotion-chips">
-                <div class="chip" onclick="selectChip(this,'emotion')">Anxious</div>
-                <div class="chip" onclick="selectChip(this,'emotion')">Neutral</div>
-                <div class="chip" onclick="selectChip(this,'emotion')">Calm</div>
-                <div class="chip" onclick="selectChip(this,'emotion')">Happy</div>
-                <div class="chip" onclick="selectChip(this,'emotion')">Proud</div>
-                <div class="chip" onclick="selectChip(this,'emotion')">Struggling</div>
-              </div>
-            </div>
-            <div class="w-sec">
-              <div class="w-sec-label">💪 Body feel</div>
-              <div class="chips" id="body-chips">
-                <div class="chip" onclick="selectChip(this,'body')">Sore</div>
-                <div class="chip" onclick="selectChip(this,'body')">Tired</div>
-                <div class="chip" onclick="selectChip(this,'body')">Strong</div>
-                <div class="chip" onclick="selectChip(this,'body')">Great</div>
-              </div>
-            </div>
-            <div class="w-sec">
-              <div class="w-sec-label">🌙 Sleep</div>
-              <div class="sleep-input-row">
-                <input class="sleep-hrs-input" id="sleep-hrs" placeholder="hrs" type="number" step="0.5" min="0" max="24"/>
-                <div class="chips" style="flex:1" id="sleep-chips">
-                  <div class="chip" onclick="selectChip(this,'sleep')">Poor</div>
-                  <div class="chip" onclick="selectChip(this,'sleep')">Good</div>
-                  <div class="chip" onclick="selectChip(this,'sleep')">Great</div>
-                </div>
-              </div>
-            </div>
-            <div class="w-sec" style="margin-bottom:4px">
-              <div class="w-sec-label">✏️ Anything else?</div>
-              <textarea class="w-textarea" id="wellness-notes" placeholder="Write something about today…"></textarea>
-            </div>
-            <button class="btn-primary" onclick="saveWellness()" style="font-size:14px;padding:10px">Save today's check-in</button>
-          </div>
-        </div>
-      </div>
+    <div class="scroll-area pb16" id="today-scroll">
+      <!-- rendered dynamically -->
     </div>
-
-    <!-- PROGRESS -->
-    <div class="screen" id="progress-screen">
-      <div class="topbar"><div class="topbar-row"><div class="app-name">75 <span>Hard</span></div></div></div>
-      <div class="group-switcher" id="prog-group-tabs"></div>
-      <div class="scroll" id="progress-scroll">
-        <div class="sec-label">Today's comparison</div>
-        <div class="compare-card" id="compare-card"></div>
-        <div class="sec-label">75-day view</div>
-        <div class="view-toggle">
-          <button class="view-btn active" id="vbtn-dots" onclick="switchView('dots')">Dot view</button>
-          <button class="view-btn" id="vbtn-cal" onclick="switchView('cal')">Calendar</button>
-        </div>
-        <div id="dot-view"></div>
-        <div id="cal-view" style="display:none"></div>
-        <div class="day-detail" id="day-detail-card"></div>
-        <div class="sec-label">Body stats</div>
-        <div id="body-stats-section"></div>
-        <div class="sec-label">Books completed</div>
-        <div class="book-list-card" id="books-section"></div>
-      </div>
-    </div>
-
-    <!-- CHAT -->
-    <div class="screen" id="chat-screen">
-      <div class="topbar">
-        <div class="topbar-row">
-          <div class="app-name">Chat</div>
-          <div id="chat-online-indicator" style="display:flex;align-items:center;gap:5px">
-            <div style="width:7px;height:7px;border-radius:50%;background:#16a34a"></div>
-            <div style="font-size:11px;color:#888780" id="chat-online-text">Group</div>
-          </div>
-        </div>
-      </div>
-      <div class="group-switcher" id="chat-group-tabs"></div>
-      <div class="chat-body">
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input-wrap">
-          <button class="photo-attach" onclick="document.getElementById('chat-photo-input').click()" type="button">📎</button>
-          <input type="file" accept="image/*" id="chat-photo-input" style="display:none" onchange="handleChatPhotoUpload(event)"/>
-          <input class="chat-input" id="chat-input" placeholder="Message or paste a link…" onkeydown="if(event.key==='Enter')sendMessage()"/>
-          <button class="chat-send-btn" onclick="sendMessage()">➤</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROFILE -->
-    <div class="screen" id="profile-screen">
-      <div class="topbar"><div class="topbar-row"><div class="app-name">Profile</div></div></div>
-      <div class="scroll">
-        <div class="profile-hero">
-          <div class="profile-avatar" id="profile-avatar-initials">?</div>
-          <div>
-            <div class="profile-name-big" id="profile-name-display">—</div>
-            <div class="profile-diet-line" id="profile-diet-display">—</div>
-          </div>
-        </div>
-        <div class="sec-label">Wellness history</div>
-        <div class="card" id="wellness-history-card"><div style="font-size:12px;color:#b4b2a9;text-align:center;padding:8px">No check-ins yet</div></div>
-        <div id="period-profile-section"></div>
-        <div class="sec-label">Settings</div>
-        <div class="card">
-          <div class="setting-row"><div class="setting-lbl">Your invite code</div><div style="display:flex;align-items:center;gap:6px"><div class="setting-val" id="setting-invite-val" style="font-weight:700;color:#2c2c2a;letter-spacing:0.1em">—</div><button onclick="copyInviteCode()" style="font-size:11px;background:#eaf3de;border:none;color:#3b6d11;padding:3px 8px;border-radius:6px;font-weight:600;cursor:pointer">Copy</button></div></div>
-          <div class="setting-row"><div class="setting-lbl">Weight unit</div><div class="setting-val" id="setting-unit-val">kg</div></div>
-          <div class="setting-row"><div class="setting-lbl">Challenge start</div><div class="setting-val" id="setting-start-val">—</div></div>
-          <div class="setting-row" style="border:none;padding-bottom:0"><button class="btn-danger" onclick="confirmRestart()">Restart challenge from day 1</button></div>
-        </div>
-        <div style="height:16px"></div>
-      </div>
-    </div>
-
   </div>
 
-  <nav id="bottom-nav" style="display:none">
-    <button class="nav-btn" id="nav-today" onclick="goTo('today')">
-      <div class="nav-icon">✓</div>
-      <div class="nav-label">Today</div>
+  <!-- PROGRESS SCREEN -->
+  <div class="screen" id="screen-progress">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="app-logo">75 <span>Hard</span></div>
+      </div>
+    </div>
+    <div class="group-tabs" id="prog-tabs"></div>
+    <div class="scroll-area pb16" id="progress-scroll">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- CHAT SCREEN -->
+  <div class="screen" id="screen-chat">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="app-logo">Chat</div>
+        <div id="chat-online" style="display:flex;align-items:center;gap:5px">
+          <div style="width:7px;height:7px;border-radius:50%;background:#16a34a"></div>
+          <div style="font-size:11px;color:#aaa" id="chat-status">Group</div>
+        </div>
+      </div>
+    </div>
+    <div class="group-tabs" id="chat-tabs"></div>
+    <div class="chat-body">
+      <div class="chat-messages" id="chat-messages">
+        <div style="text-align:center;padding:20px;color:#aaa;font-size:12px">Select a group to start chatting</div>
+      </div>
+      <div class="chat-input-row">
+        <div class="chat-attach" onclick="document.getElementById('chat-photo-input').click()">📎</div>
+        <input type="file" id="chat-photo-input" accept="image/*" style="display:none" onchange="sendChatPhoto(event)"/>
+        <input class="chat-input" id="chat-input" placeholder="Message or paste a link…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage()}"/>
+        <button class="chat-send" onclick="sendChatMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE SCREEN -->
+  <div class="screen" id="screen-profile">
+    <div class="topbar">
+      <div class="topbar-row"><div class="app-logo">Profile</div></div>
+    </div>
+    <div class="scroll-area pb16" id="profile-scroll">
+      <!-- rendered dynamically -->
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" id="nav-today" onclick="goTo('today')">
+      <div class="nav-btn-icon">✓</div>
+      <div class="nav-btn-label">Today</div>
     </button>
     <button class="nav-btn" id="nav-progress" onclick="goTo('progress')">
-      <div class="nav-icon">📊</div>
-      <div class="nav-label">Progress</div>
+      <div class="nav-btn-icon">📊</div>
+      <div class="nav-btn-label">Progress</div>
     </button>
     <button class="nav-btn" id="nav-chat" onclick="goTo('chat')">
-      <div class="nav-badge" id="chat-nav-badge"><div class="nav-icon">💬</div></div>
-      <div class="nav-label">Chat</div>
+      <div class="nav-btn-icon">💬</div>
+      <div class="nav-btn-label">Chat</div>
+      <div class="nav-unread" id="chat-unread-dot"></div>
     </button>
     <button class="nav-btn" id="nav-profile" onclick="goTo('profile')">
-      <div class="nav-icon">👤</div>
-      <div class="nav-label">Profile</div>
+      <div class="nav-btn-icon">👤</div>
+      <div class="nav-btn-label">Profile</div>
     </button>
   </nav>
 </div>
 
-<!-- BOOK MODAL -->
-<div class="modal-overlay" id="book-modal">
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-book">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" id="book-modal-title">What are you reading?</div>
-    <div class="field-group"><div class="field-label">Book title</div><input class="field-input" id="book-title-input" placeholder="Enter book title" maxlength="60"/></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('book-modal')" style="flex:1">Cancel</button>
-      <button class="btn-primary" onclick="saveBook()" style="flex:2">Save book</button>
+    <div class="field-group">
+      <div class="field-label">Book title</div>
+      <input class="field-input" id="book-input" placeholder="Enter book title" maxlength="80"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-book')">Cancel</button>
+      <button class="btn-confirm" onclick="saveBook()">Save book</button>
     </div>
   </div>
 </div>
 
-<!-- JOIN GROUP MODAL -->
-<div class="modal-overlay" id="join-modal">
+<div class="modal-overlay" id="modal-join">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Join another group</div>
-    <div class="field-group"><div class="field-label">Enter invite code</div><input class="field-input" id="join-code-input" placeholder="e.g. HRD-482" style="text-transform:uppercase" maxlength="7"/></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('join-modal')" style="flex:1">Cancel</button>
-      <button class="btn-primary" onclick="joinGroupFromModal()" style="flex:2">Join group</button>
+    <div class="field-group">
+      <div class="field-label">Enter invite code</div>
+      <input class="field-input" id="join-code-input" placeholder="e.g. HRD-482" style="text-transform:uppercase" maxlength="7"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-join')">Cancel</button>
+      <button class="btn-confirm" onclick="joinGroupModal()">Join group</button>
     </div>
   </div>
 </div>
 
-<!-- WEIGHT LOG MODAL -->
-<div class="modal-overlay" id="weight-modal">
+<div class="modal-overlay" id="modal-rename">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Rename group</div>
+    <div class="field-group">
+      <div class="field-label">Group name</div>
+      <input class="field-input" id="rename-input" placeholder="Enter group name" maxlength="30"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-rename')">Cancel</button>
+      <button class="btn-confirm" onclick="saveGroupRename()">Save name</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-weight">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title" id="weight-modal-title">Log your weight</div>
-    <div class="field-group"><div class="field-label" id="weight-modal-label">Weight</div><input class="field-input" id="weight-input" placeholder="Enter number" type="number" step="0.1"/></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeModal('weight-modal')" style="flex:1">Cancel</button>
-      <button class="btn-primary" onclick="saveWeight()" style="flex:2">Save</button>
+    <div class="field-group">
+      <div class="field-label" id="weight-modal-label">Weight</div>
+      <input class="field-input" id="weight-input" type="number" step="0.1" placeholder="Enter number"/>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal('modal-weight')">Cancel</button>
+      <button class="btn-confirm" onclick="saveWeightLog()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- MEASUREMENTS LOG MODAL -->
-<div class="modal-overlay" id="meas-modal">
+<div class="modal-overlay" id="modal-meas">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">Log measurements</div>
-    <div class="meas-grid" style="gap:10px">
-      <div class="field-group" style="margin-bottom:0"><div class="field-label">Chest</div><input class="field-input" id="meas-chest" type="number" step="0.1"/></div>
-      <div class="field-group" style="margin-bottom:0"><div class="field-label">Waist</div><input class="field-input" id="meas-waist" type="number" step="0.1"/></div>
-      <div class="field-group" style="margin-bottom:0"><div class="field-label">Hips</div><input class="field-input" id="meas-hips" type="number" step="0.1"/></div>
-      <div class="field-group" style="margin-bottom:0"><div class="field-label">Arms</div><input class="field-input" id="meas-arms" type="number" step="0.1"/></div>
-      <div class="field-group" style="margin-bottom:0;grid-column:span 2"><div class="field-label">Thighs</div><input class="field-input" id="meas-thighs" type="number" step="0.1"/></div>
+    <div class="meas-grid2" style="gap:10px">
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Chest</div><input class="field-input" id="m-chest" type="number" step="0.1"/></div>
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Waist</div><input class="field-input" id="m-waist" type="number" step="0.1"/></div>
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Hips</div><input class="field-input" id="m-hips" type="number" step="0.1"/></div>
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Arms</div><input class="field-input" id="m-arms" type="number" step="0.1"/></div>
+      <div class="field-group" style="margin-bottom:0;grid-column:span 2"><div class="field-label">Thighs</div><input class="field-input" id="m-thighs" type="number" step="0.1"/></div>
     </div>
-    <div class="modal-actions" style="margin-top:14px">
-      <button class="btn-secondary" onclick="closeModal('meas-modal')" style="flex:1">Cancel</button>
-      <button class="btn-primary" onclick="saveMeasurements()" style="flex:2">Save</button>
+    <div class="modal-btns" style="margin-top:14px">
+      <button class="btn-cancel" onclick="closeModal('modal-meas')">Cancel</button>
+      <button class="btn-confirm" onclick="saveMeasLog()">Save</button>
     </div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, addDoc, query, orderBy, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc,
+  collection, addDoc, query, orderBy, onSnapshot,
+  serverTimestamp, getDocs
+} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-const firebaseConfig = {
+// ── FIREBASE ──
+const FB = initializeApp({
   apiKey: "AIzaSyD66UyXQzdwChcKteo_1FAnMJOFVNhtnT8",
   authDomain: "hard-tracker-73c97.firebaseapp.com",
   projectId: "hard-tracker-73c97",
   storageBucket: "hard-tracker-73c97.firebasestorage.app",
   messagingSenderId: "836005000350",
   appId: "1:836005000350:web:3abeae9abb00839195378f"
-};
-
-const fireApp = initializeApp(firebaseConfig);
-const db = getFirestore(fireApp);
+});
+const db = getFirestore(FB);
 
 // ── STATE ──
-let ME = null;
-let myGroups = [];
-let activeGroupId = null;
-let groupMembers = {};
-let chatUnsubs = {};
-let currentScreen = 'signup';
-let selectedGender = '';
-let selectedUnit = 'kg';
-let wellnessSelections = { energy:'', emotion:'', body:'', sleep:'' };
-let currentView = 'dots';
-let photoFile = null;
-let unsubMe = null;
+let ME = null;           // current user profile object + .id
+let GROUPS = [];         // array of group objects
+let MEMBERS = {};        // { groupId: { userId: profileObj } }
+let ACTIVE_GID = null;   // active group id
+let CHAT_UNSUB = null;   // firestore listener unsub
+let CURRENT_SCREEN = 'today';
+let GENDER_SEL = '';
+let UNIT_SEL = 'kg';
+let RENAMING_GID = null;
+let notifTimer = null;
 
 // ── HELPERS ──
-function todayStr() {
-  return new Date().toISOString().slice(0,10);
-}
+const $ = id => document.getElementById(id);
+const todayStr = () => new Date().toISOString().slice(0,10);
+
 function dayNum(startDate) {
   if (!startDate) return 1;
-  const s = new Date(startDate + 'T12:00:00');
-  const n = new Date(todayStr() + 'T12:00:00');
-  return Math.max(1, Math.floor((n-s)/86400000)+1);
+  const diff = new Date(todayStr()+'T12:00:00') - new Date(startDate+'T12:00:00');
+  return Math.max(1, Math.floor(diff/86400000)+1);
 }
-function streak(days, startDate) {
+
+function calcStreak(days, startDate) {
   if (!days || !startDate) return 0;
   let s = 0;
   const start = new Date(startDate+'T12:00:00');
   const d = new Date(todayStr()+'T12:00:00');
-  while (d >= start) {
+  while (true) {
+    d.setDate(d.getDate()-1);
+    if (d < start) break;
     const ds = d.toISOString().slice(0,10);
-    const day = days[ds];
-    if (ds === todayStr()) { d.setDate(d.getDate()-1); continue; }
-    if (day && day.allDone) { s++; d.setDate(d.getDate()-1); }
+    if ((days[ds]||{}).allDone) s++;
     else break;
   }
   return s;
 }
+
+function isComplete(td) {
+  if (!td) return false;
+  return !!(td.w1type && td.w1mins >= 45 &&
+            td.w2type && td.w2mins >= 45 &&
+            (td.water||0) >= 4 &&
+            td.readDone && td.dietDone && td.photoDone);
+}
+
+function isExpired24h(ts) {
+  if (!ts) return false;
+  try {
+    const t = ts.toDate ? ts.toDate() : new Date(ts);
+    return Date.now() - t.getTime() > 24*60*60*1000;
+  } catch(e) { return false; }
+}
+
 function genCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let c = 'HRD-';
-  for (let i=0;i<3;i++) c += chars[Math.floor(Math.random()*chars.length)];
-  return c;
+  return 'HRD-' + Array.from({length:3}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('');
 }
+
 function initials(name) {
   if (!name) return '?';
-  return name.trim().split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  return name.trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2);
 }
-function formatTime(ts) {
-  if (!ts) return '';
-  const d = ts.toDate ? ts.toDate() : new Date(ts);
-  return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-}
+
 function fmtDate(ds) {
   if (!ds) return '';
   return new Date(ds+'T12:00:00').toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'});
 }
-function nextPeriod(lastDate, cycleLen) {
-  if (!lastDate || !cycleLen) return null;
-  const d = new Date(lastDate+'T12:00:00');
-  d.setDate(d.getDate() + parseInt(cycleLen));
+
+function fmtTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  } catch(e) { return ''; }
+}
+
+function nextPeriodDate(lastPeriod, cycleLen) {
+  if (!lastPeriod || !cycleLen) return null;
+  const d = new Date(lastPeriod+'T12:00:00');
+  d.setDate(d.getDate()+parseInt(cycleLen));
   return d.toISOString().slice(0,10);
 }
+
 function daysUntil(ds) {
   if (!ds) return null;
-  const d = new Date(ds+'T12:00:00');
-  const n = new Date(todayStr()+'T12:00:00');
-  return Math.ceil((d-n)/86400000);
+  return Math.ceil((new Date(ds+'T12:00:00') - new Date(todayStr()+'T12:00:00')) / 86400000);
 }
-function challengeEndDate(startDate) {
+
+function cyclePhase(dateStr, lastPeriod, cycleLen) {
+  if (!lastPeriod || !cycleLen) return null;
+  const start = new Date(lastPeriod+'T12:00:00');
+  const check = new Date(dateStr+'T12:00:00');
+  let diff = Math.floor((check-start)/86400000);
+  const cycle = parseInt(cycleLen);
+  diff = ((diff % cycle) + cycle) % cycle;
+  const day = diff + 1;
+  const mEnd = Math.round(cycle*0.18);
+  const oStart = Math.round(cycle*0.46);
+  const oEnd = Math.round(cycle*0.57);
+  if (day <= mEnd) return {label:'Menstrual',color:'#f87171'};
+  if (day <= oStart) return {label:'Follicular',color:'#60a5fa'};
+  if (day <= oEnd) return {label:'Ovulation',color:'#34d399'};
+  return {label:'Luteal',color:'#c084fc'};
+}
+
+function challengeEnd(startDate) {
   if (!startDate) return null;
   const d = new Date(startDate+'T12:00:00');
   d.setDate(d.getDate()+74);
   return d.toISOString().slice(0,10);
 }
-function getYouTubeId(url) {
+
+function ytId(url) {
   try {
     const u = new URL(url);
-    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1);
+    if (u.hostname.includes('youtu.be')) return u.pathname.slice(1).split('?')[0];
     if (u.hostname.includes('youtube.com')) {
-      if (u.pathname === '/watch') return u.searchParams.get('v');
+      if (u.searchParams.get('v')) return u.searchParams.get('v');
       if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/')[2];
-      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/')[2];
     }
   } catch(e) {}
   return null;
 }
 
-function isExpired(ts) {
-  if (!ts) return false;
-  const t = ts.toDate ? ts.toDate() : new Date(ts);
-  return Date.now() - t.getTime() > 24*60*60*1000;
+// ── COMPRESS IMAGE ──
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const MAX = 300;
+        const ratio = Math.min(MAX/img.width, MAX/img.height, 1);
+        const w = Math.round(img.width*ratio);
+        const h = Math.round(img.height*ratio);
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        let q = 0.5;
+        let out = canvas.toDataURL('image/jpeg', q);
+        while (out.length > 600000 && q > 0.1) {
+          q -= 0.1;
+          out = canvas.toDataURL('image/jpeg', q);
+        }
+        if (out.length > 700000) { reject(new Error('Image too large even after compression')); return; }
+        resolve(out);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
-// ── PERIOD PHASE CALCULATION ──
-function getCyclePhase(dateStr, lastPeriod, cycleLen) {
-  if (!lastPeriod || !cycleLen) return null;
-  const start = new Date(lastPeriod+'T12:00:00');
-  const check = new Date(dateStr+'T12:00:00');
-  let diffDays = Math.floor((check-start)/86400000);
-  // Normalize into current cycle (handle dates before/after multiple cycles)
-  diffDays = ((diffDays % cycleLen) + cycleLen) % cycleLen;
-  const cycleDay = diffDays + 1; // 1-indexed
+// ── NOTIFICATIONS ──
+function showNotif(text) {
+  $('notif-text').textContent = text;
+  $('notif').classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => $('notif').classList.remove('show'), 4000);
+}
+window.hideNotif = () => $('notif').classList.remove('show');
 
-  const menstrualEnd = Math.round(cycleLen * 0.18); // ~5 days of 28
-  const ovulationStart = Math.round(cycleLen * 0.46); // ~13 of 28
-  const ovulationEnd = Math.round(cycleLen * 0.57); // ~16 of 28
+// ── MODALS ──
+window.openModal = id => $( id).classList.add('open');
+window.closeModal = id => $(id).classList.remove('open');
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
 
-  if (cycleDay <= menstrualEnd) return { phase: 'menstrual', label: 'Menstrual', color: '#f87171' };
-  if (cycleDay <= ovulationStart) return { phase: 'follicular', label: 'Follicular', color: '#60a5fa' };
-  if (cycleDay <= ovulationEnd) return { phase: 'ovulation', label: 'Ovulation', color: '#34d399' };
-  return { phase: 'luteal', label: 'Luteal', color: '#c084fc' };
+// ── SIGNUP ──
+window.pickGender = (g) => {
+  GENDER_SEL = g;
+  ['female','male','other'].forEach(x => {
+    $('g-'+x).classList.toggle('sel', x===g);
+  });
+  $('cycle-section').classList.toggle('hidden', g !== 'female');
+};
+window.pickUnit = (u) => {
+  UNIT_SEL = u;
+  $('u-kg').classList.toggle('sel', u==='kg');
+  $('u-lbs').classList.toggle('sel', u==='lbs');
+};
+
+async function initSignup() {
+  const code = genCode();
+  $('su-code').textContent = code;
+  window._myCode = code;
+  // Check if code already exists, regenerate if so
+  const snap = await getDoc(doc(db, 'users', code));
+  if (snap.exists()) { initSignup(); return; }
 }
 
-// ── GRACE PERIOD LOGIC ──
-function dayCompleteCheck(td) {
-  if (!td) return false;
-  return !!(td.w1type && td.w1mins >= 45 && td.w2type && td.w2mins >= 45 &&
-    (td.water||0) >= 4 && td.readDone && td.dietDone && td.photoDone);
-}
+window.signinWithCode = async () => {
+  const code = $('signin-code').value.trim().toUpperCase();
+  if (!code) return alert('Enter your invite code');
+  const snap = await getDoc(doc(db, 'users', code));
+  if (!snap.exists()) return alert('Code not found — check and try again');
+  localStorage.setItem('75hard_uid', code);
+  ME = { ...snap.data(), id: code };
+  await launchApp();
+};
 
-const GRACE_DAYS = 2;
+window.completeSignup = async () => {
+  const name = $('su-name').value.trim();
+  const diet = $('su-diet').value.trim();
+  if (!name) return alert('Please enter your name');
+  if (!diet) return alert('Please enter your diet plan');
+  if (!GENDER_SEL) return alert('Please select your gender');
 
-function getGraceDays(startDate, days) {
-  // Returns days within the grace window (excluding today) that are incomplete
+  const code = window._myCode || genCode();
   const today = todayStr();
-  const result = [];
-  const start = new Date(startDate+'T12:00:00');
-  const dn = dayNum(startDate);
-  for (let d = Math.max(1, dn-GRACE_DAYS); d < dn; d++) {
+  const profile = {
+    name, diet, gender: GENDER_SEL, unit: UNIT_SEL,
+    startDate: today, days: {},
+    weight: parseFloat($('su-weight').value)||0,
+    weightLogs: [{ day:1, date:today, value: parseFloat($('su-weight').value)||0 }],
+    measurements: {
+      chest: parseFloat($('su-chest').value)||0,
+      waist: parseFloat($('su-waist').value)||0,
+      hips: parseFloat($('su-hips').value)||0,
+      arms: parseFloat($('su-arms').value)||0,
+      thighs: parseFloat($('su-thighs').value)||0,
+    },
+    measLogs: [],
+    books: [], currentBook: null,
+    groups: [code],
+    wellnessHistory: [],
+  };
+  if (GENDER_SEL === 'female') {
+    profile.cycleLength = parseInt($('su-cycle').value)||28;
+    profile.lastPeriod = $('su-period').value || today;
+  }
+
+  await setDoc(doc(db, 'users', code), profile);
+  await setDoc(doc(db, 'groups', code), {
+    name: name + "'s group", createdBy: code, members: [code], createdAt: today
+  });
+
+  const joinCode = $('su-join').value.trim().toUpperCase();
+  if (joinCode && joinCode !== code) {
+    const gSnap = await getDoc(doc(db, 'groups', joinCode));
+    if (gSnap.exists()) {
+      const members = gSnap.data().members || [];
+      if (!members.includes(code)) {
+        await updateDoc(doc(db, 'groups', joinCode), { members: [...members, code] });
+      }
+      profile.groups = [code, joinCode];
+      await updateDoc(doc(db, 'users', code), { groups: profile.groups });
+    } else {
+      alert("Group code not found — you can join later from the Progress screen");
+    }
+  }
+
+  localStorage.setItem('75hard_uid', code);
+  ME = { ...profile, id: code };
+  await launchApp();
+};
+
+// ── LAUNCH APP ──
+async function launchApp() {
+  $('signup').style.display = 'none';
+  $('app').style.display = 'flex';
+  $('loading').style.display = 'none';
+  await loadGroups();
+  checkAutoRestart();
+  goTo('today');
+  subscribeMe();
+}
+
+function subscribeMe() {
+  onSnapshot(doc(db, 'users', ME.id), snap => {
+    if (!snap.exists()) return;
+    ME = { ...snap.data(), id: ME.id };
+    if (CURRENT_SCREEN === 'today') renderToday();
+    if (CURRENT_SCREEN === 'profile') renderProfile();
+    if (CURRENT_SCREEN === 'progress') renderProgress();
+  });
+}
+
+async function loadGroups() {
+  GROUPS = [];
+  MEMBERS = {};
+  for (const gid of (ME.groups||[])) {
+    const gs = await getDoc(doc(db, 'groups', gid));
+    if (!gs.exists()) continue;
+    const g = { id: gid, ...gs.data() };
+    GROUPS.push(g);
+    const mem = {};
+    for (const uid of (g.members||[])) {
+      const us = await getDoc(doc(db, 'users', uid));
+      if (us.exists()) mem[uid] = { ...us.data(), id: uid };
+    }
+    MEMBERS[gid] = mem;
+  }
+  if (!ACTIVE_GID && GROUPS.length) ACTIVE_GID = GROUPS[0].id;
+}
+
+// ── AUTO RESTART ──
+function checkAutoRestart() {
+  const GRACE = 2;
+  const dn = dayNum(ME.startDate);
+  const start = new Date(ME.startDate+'T12:00:00');
+  for (let d = 1; d <= dn-(GRACE+1); d++) {
     const ds = new Date(start);
-    ds.setDate(ds.getDate() + (d-1));
+    ds.setDate(ds.getDate()+(d-1));
     const dateStr = ds.toISOString().slice(0,10);
-    const td = (days||{})[dateStr];
-    const complete = dayCompleteCheck(td);
-    if (!complete) {
-      const daysLeft = GRACE_DAYS - (dn - d);
-      result.push({ day: d, date: dateStr, daysLeft });
+    if (!isComplete((ME.days||{})[dateStr])) {
+      performRestart('Day '+d+' was never completed — challenge restarted from day 1!');
+      return;
+    }
+  }
+}
+
+async function performRestart(reason) {
+  const today = todayStr();
+  const updates = {
+    startDate: today, days: {}, books: [], currentBook: null,
+    weightLogs: [{ day:1, date:today, value: ME.weight||0 }],
+    measLogs: [], wellnessHistory: []
+  };
+  await updateDoc(doc(db, 'users', ME.id), updates);
+  ME = { ...ME, ...updates };
+  showNotif('⚠ ' + reason);
+}
+
+// ── NAVIGATION ──
+window.goTo = (screen) => {
+  CURRENT_SCREEN = screen;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('screen-'+screen).classList.add('active');
+  $('nav-'+screen).classList.add('active');
+  if (screen === 'today') renderToday();
+  if (screen === 'progress') renderProgress();
+  if (screen === 'chat') { renderChatTabs(); subscribeActiveChat(); }
+  if (screen === 'profile') renderProfile();
+};
+
+// ═══════════════════════════════════════════
+// ── TODAY SCREEN ──
+// ═══════════════════════════════════════════
+function renderToday() {
+  const GRACE = 2;
+  const dn = Math.min(dayNum(ME.startDate), 75);
+  const str = calcStreak(ME.days, ME.startDate);
+  const pct = Math.round(dn/75*100);
+  const today = todayStr();
+  const td = (ME.days||{})[today] || {};
+  $('today-chip').textContent = (ME.name||'') + ' · Day ' + dn;
+
+  let html = '';
+
+  // Hero
+  html += `<div class="hero">
+    <div class="hero-row">
+      <div><div class="hero-day">${dn}</div><div class="hero-label">day of 75</div></div>
+      <div class="streak-badge">🔥 ${str} streak</div>
+    </div>
+    <div class="hero-prog-track"><div class="hero-prog-fill" style="width:${pct}%"></div></div>
+    <div class="hero-prog-text">${pct}% complete${pct>0?' — keep going!':' — let\'s start!'}</div>
+  </div>`;
+
+  // Grace period banner
+  const graceDays = getGraceDays();
+  if (graceDays.length) {
+    const worst = graceDays[0];
+    html += `<div class="grace-banner">
+      <div class="grace-title">⏳ Day ${worst.day} is incomplete — ${worst.daysLeft} day${worst.daysLeft===1?'':'s'} left to fix it</div>
+      <div class="grace-body">You have ${GRACE} days to go back and complete missed tasks. After that the challenge auto-restarts.</div>
+    </div>`;
+  }
+
+  // Today tasks section
+  html += `<div class="slabel">Today's tasks</div>`;
+  html += buildTasksHTML(td, today, false);
+
+  // Grace period past days
+  graceDays.forEach(gd => {
+    const ptd = (ME.days||{})[gd.date] || {};
+    html += `<div class="slabel">Day ${gd.day} tasks — <span style="color:#e59400">${gd.daysLeft} day${gd.daysLeft===1?'':'s'} left</span></div>`;
+    html += buildTasksHTML(ptd, gd.date, true);
+  });
+
+  // Period strip
+  if (ME.gender === 'female' && ME.lastPeriod) {
+    const next = nextPeriodDate(ME.lastPeriod, ME.cycleLength);
+    const du = daysUntil(next);
+    html += `<div class="period-strip">
+      <div><div class="period-left-text">Next period in</div><div class="period-date-text">Est. ${fmtDate(next)}</div></div>
+      <div><span class="period-days-num">${du>0?du:0}</span> <span class="period-days-unit">days</span></div>
+    </div>`;
+  }
+
+  // Wellness
+  html += `<div class="slabel">Today's check-in <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#bbb">(unlocks after all 6 tasks done)</span></div>`;
+  html += buildWellnessHTML(td);
+
+  $('today-scroll').innerHTML = html;
+  attachTodayListeners(td, today);
+  graceDays.forEach(gd => {
+    attachTodayListeners((ME.days||{})[gd.date]||{}, gd.date);
+  });
+}
+
+function getGraceDays() {
+  const GRACE = 2;
+  const dn = dayNum(ME.startDate);
+  const start = new Date(ME.startDate+'T12:00:00');
+  const result = [];
+  for (let d = Math.max(1, dn-GRACE); d < dn; d++) {
+    const ds = new Date(start);
+    ds.setDate(ds.getDate()+(d-1));
+    const dateStr = ds.toISOString().slice(0,10);
+    if (!isComplete((ME.days||{})[dateStr])) {
+      result.push({ day:d, date:dateStr, daysLeft: GRACE-(dn-d) });
     }
   }
   return result;
 }
 
-function checkAutoRestart(startDate, days) {
-  // Check if any day older than the grace window (and within challenge) is incomplete -> restart needed
-  const dn = dayNum(startDate);
-  const start = new Date(startDate+'T12:00:00');
-  for (let d = 1; d <= dn-(GRACE_DAYS+1); d++) {
-    const ds = new Date(start);
-    ds.setDate(ds.getDate() + (d-1));
-    const dateStr = ds.toISOString().slice(0,10);
-    const td = (days||{})[dateStr];
-    if (!dayCompleteCheck(td)) return { restart: true, failedDay: d, failedDate: dateStr };
+function buildTasksHTML(td, dateStr, isPast) {
+  const w1done = !!(td.w1type && td.w1mins>=45);
+  const w2done = !!(td.w2type && td.w2mins>=45);
+  const waterDone = (td.water||0)>=4;
+  const readDone = !!td.readDone;
+  const dietDone = !!td.dietDone;
+  const photoDone = !!td.photoDone;
+  const allDone = w1done && w2done && waterDone && readDone && dietDone && photoDone;
+  const ds = dateStr;
+
+  let h = `<div class="task-list-${ds}" style="padding:0 16px;display:flex;flex-direction:column;gap:7px;margin-bottom:8px">`;
+
+  // Workout 1
+  h += `<div class="card${w1done?' done':''}" id="card-w1-${ds}">
+    <div class="task-header">
+      <div class="task-icon">🏋️</div>
+      <div class="task-body">
+        <div class="task-name">Workout 1 (indoor)</div>
+        <div class="task-sub">${w1done ? (td.w1type+' · '+td.w1mins+' min ✓') : 'Select type and enter minutes'}</div>
+      </div>
+      <div class="task-check">${w1done?'✓':''}</div>
+    </div>`;
+  if (!w1done) {
+    h += `<div class="task-expand">
+      <div class="workout-row">
+        <select class="w-select" id="w1type-${ds}">
+          <option value="">Type ▾</option>
+          ${['Strength training','Cardio','HIIT','Yoga','Pilates','Swimming','Cycling','Sports','Other'].map(o=>`<option ${td.w1type===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+        <input class="w-mins" id="w1mins-${ds}" type="number" min="1" max="300" placeholder="mins" value="${td.w1mins||''}"/>
+      </div>
+      <div class="w-hint">Both required · minimum 45 min</div>
+    </div>`;
   }
-  return { restart: false };
-}
-function compressImage(file, maxSize=320) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ratio = Math.min(maxSize/img.width, maxSize/img.height, 1);
-        canvas.width = Math.round(img.width*ratio);
-        canvas.height = Math.round(img.height*ratio);
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        let quality = 0.55;
-        let dataUrl = canvas.toDataURL('image/jpeg', quality);
-        // Safety: keep shrinking quality if still too big for Firestore (1MB doc limit)
-        while (dataUrl.length > 700000 && quality > 0.15) {
-          quality -= 0.1;
-          dataUrl = canvas.toDataURL('image/jpeg', quality);
-        }
-        resolve(dataUrl);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-function showNotif(text) {
-  document.getElementById('notif-text').textContent = text;
-  const b = document.getElementById('notif-banner');
-  b.classList.add('show');
-  setTimeout(() => b.classList.remove('show'), 4000);
-}
-window.closeNotif = () => document.getElementById('notif-banner').classList.remove('show');
+  h += `</div>`;
 
-// ── SIGNUP ──
-window.selectGender = (g, el) => {
-  selectedGender = g;
-  document.querySelectorAll('#signup-screen .seg-btn').forEach(b => {
-    if (['Female','Male','Other'].includes(b.textContent)) b.classList.remove('sel');
-  });
-  el.classList.add('sel');
-  document.getElementById('cycle-fields').style.display = g === 'female' ? 'block' : 'none';
-};
-window.selectUnit = (u) => {
-  selectedUnit = u;
-  document.getElementById('unit-kg').classList.toggle('sel', u==='kg');
-  document.getElementById('unit-lbs').classList.toggle('sel', u==='lbs');
-};
-
-async function initSignup() {
-  const code = genCode();
-  document.getElementById('su-invite-code').textContent = code;
-  window._pendingCode = code;
-}
-
-window.completeSignup = async () => {
-  const name = document.getElementById('su-name').value.trim();
-  const diet = document.getElementById('su-diet').value.trim();
-  if (!name) return alert('Please enter your name');
-  if (!diet) return alert('Please enter your diet plan');
-  if (!selectedGender) return alert('Please select your gender');
-
-  const weight = parseFloat(document.getElementById('su-weight').value) || 0;
-  const myCode = window._pendingCode;
-  const joinCode = document.getElementById('su-join-code').value.trim().toUpperCase();
-  const today = todayStr();
-
-  const profile = {
-    name, diet, gender: selectedGender, unit: selectedUnit,
-    weight, weightLogs: [{day:1, date:today, value:weight}],
-    measurements: {
-      chest: parseFloat(document.getElementById('su-chest').value)||0,
-      waist: parseFloat(document.getElementById('su-waist').value)||0,
-      hips: parseFloat(document.getElementById('su-hips').value)||0,
-      arms: parseFloat(document.getElementById('su-arms').value)||0,
-      thighs: parseFloat(document.getElementById('su-thighs').value)||0,
-    },
-    measurementLogs: [],
-    startDate: today,
-    inviteCode: myCode,
-    groups: [],
-    days: {}, books: [], currentBook: null,
-    wellnessHistory: [],
-  };
-
-  if (selectedGender === 'female') {
-    profile.cycleLength = parseInt(document.getElementById('su-cycle').value)||28;
-    profile.lastPeriod = document.getElementById('su-period').value || today;
+  // Workout 2
+  h += `<div class="card${w2done?' done':''}" id="card-w2-${ds}">
+    <div class="task-header">
+      <div class="task-icon">🌳</div>
+      <div class="task-body">
+        <div class="task-name">Workout 2 (outdoor)</div>
+        <div class="task-sub">${w2done ? (td.w2type+' · '+td.w2mins+' min ✓') : 'Select type and enter minutes'}</div>
+      </div>
+      <div class="task-check">${w2done?'✓':''}</div>
+    </div>`;
+  if (!w2done) {
+    h += `<div class="task-expand">
+      <div class="workout-row">
+        <select class="w-select" id="w2type-${ds}">
+          <option value="">Type ▾</option>
+          ${['Walk','Run','Cycling','Swimming','Sports','Hiking','Other'].map(o=>`<option ${td.w2type===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+        <input class="w-mins" id="w2mins-${ds}" type="number" min="1" max="300" placeholder="mins" value="${td.w2mins||''}"/>
+      </div>
+      <div class="w-hint">Both required · minimum 45 min</div>
+    </div>`;
   }
+  h += `</div>`;
 
-  const userRef = doc(db, 'users', myCode);
-  await setDoc(userRef, profile);
+  // Water
+  h += `<div class="card${waterDone?' done':''}" id="card-water-${ds}">
+    <div class="task-header">
+      <div class="task-icon">💧</div>
+      <div class="task-body">
+        <div class="task-name">1 gallon of water</div>
+        <div class="task-sub">${waterDone?'All 4 bottles done ✓':((td.water||0)+' of 4 bottles done')}</div>
+      </div>
+      <div class="task-check">${waterDone?'✓':''}</div>
+    </div>`;
+  if (!waterDone) {
+    h += `<div class="bottles" id="bottles-${ds}">`;
+    for (let i=1;i<=4;i++) {
+      const full = (td.water||0)>=i;
+      h += `<div class="bottle${full?' full':''}" data-ds="${ds}" data-n="${i}"><div class="bottle-icon">${full?'🫙':'🫙'}</div><div class="bottle-label">${i}</div></div>`;
+    }
+    h += `</div>`;
+  }
+  h += `</div>`;
 
-  // Create own group
-  const groupRef = doc(db, 'groups', myCode);
-  await setDoc(groupRef, { name: name + "'s group", createdBy: myCode, members: [myCode], createdAt: today });
-  profile.groups = [myCode];
-  await updateDoc(userRef, { groups: [myCode] });
-
-  // Join friend's group if code provided
-  if (joinCode && joinCode !== myCode) {
-    const gRef = doc(db, 'groups', joinCode);
-    const gSnap = await getDoc(gRef);
-    if (gSnap.exists()) {
-      const gData = gSnap.data();
-      const members = gData.members || [];
-      if (!members.includes(myCode)) {
-        members.push(myCode);
-        await updateDoc(gRef, { members });
-      }
-      profile.groups = [myCode, joinCode];
-      await updateDoc(userRef, { groups: profile.groups });
+  // Reading
+  const bookTitle = td.bookTitle || ME.currentBook || '';
+  h += `<div class="card${readDone?' done':''}" id="card-read-${ds}">
+    <div class="task-header">
+      <div class="task-icon">📖</div>
+      <div class="task-body">
+        <div class="task-name">Read 10 pages</div>
+        <div class="task-sub">${readDone ? '📚 '+bookTitle+' ✓' : (bookTitle ? '📚 '+bookTitle : 'Tap to add your book first')}</div>
+      </div>
+      <div class="task-check">${readDone?'✓':''}</div>
+    </div>`;
+  if (!readDone) {
+    if (!ME.currentBook) {
+      h += `<button class="mark-read-btn" data-action="addbook" data-ds="${ds}">+ Add your current book</button>`;
     } else {
-      alert('Group code not found — you can join a group later from the Progress screen');
+      h += `<div class="book-info-row">
+        <div class="book-name">📚 ${ME.currentBook}</div>
+        <button class="book-done-btn" data-action="finishbook" data-ds="${ds}">Finished? →</button>
+      </div>
+      <button class="mark-read-btn" data-action="markread" data-ds="${ds}" style="margin-top:6px">Mark 10 pages read ✓</button>`;
     }
   }
+  h += `</div>`;
 
-  localStorage.setItem('75hard_myCode', myCode);
-  ME = { ...profile, id: myCode };
-  await bootApp();
+  // Diet
+  h += `<div class="card${dietDone?' done':''}" id="card-diet-${ds}">
+    <div class="task-header">
+      <div class="task-icon">🥗</div>
+      <div class="task-body">
+        <div class="task-name">Follow your diet</div>
+        <div class="diet-plan">"${ME.diet||''}"</div>
+      </div>
+      <div class="task-check">${dietDone?'✓':''}</div>
+    </div>
+    ${!dietDone ? `<button class="mark-read-btn" data-action="markdiet" data-ds="${ds}" style="margin-top:8px">Mark diet done ✓</button>` : ''}
+  </div>`;
+
+  // Photo
+  h += `<div class="card${photoDone?' done':''}" id="card-photo-${ds}">
+    <div class="task-header">
+      <div class="task-icon">📸</div>
+      <div class="task-body">
+        <div class="task-name">Progress photo</div>
+        <div class="task-sub">${photoDone ? 'Uploaded · visible in group chat ✓' : 'Upload to mark done · shared to group chat'}</div>
+      </div>
+      <div class="task-check">${photoDone?'✓':''}</div>
+    </div>
+    ${!photoDone ? `
+      <div class="photo-area" data-action="uploadphoto" data-ds="${ds}">
+        <div class="photo-area-icon">📷</div>
+        <div class="photo-area-label">Tap to upload photo</div>
+        <div class="photo-area-hint">Compressed · shared in chat for 24 hrs · one-time view</div>
+      </div>
+      <input type="file" accept="image/*" id="photo-input-${ds}" style="display:none"/>
+    ` : ''}
+  </div>`;
+
+  h += `</div>`;
+  return h;
+}
+
+function buildWellnessHTML(td) {
+  const allDone = isComplete(td);
+  if (!allDone) {
+    return `<div class="card"><div class="wellness-locked">Complete all 6 tasks above to unlock your daily check-in</div></div>`;
+  }
+  const w = td.wellness || {};
+  return `<div class="card" id="wellness-card">
+    <div class="w-section">
+      <div class="w-sec-label">⚡ Energy</div>
+      <div class="chips" id="chips-energy">
+        ${['Low','Moderate','High'].map(x=>`<div class="chip${w.energy===x?' sel':''}" data-group="energy" data-val="${x}">${x}</div>`).join('')}
+      </div>
+    </div>
+    <div class="w-section">
+      <div class="w-sec-label">😊 Emotion</div>
+      <div class="chips" id="chips-emotion">
+        ${['Anxious','Neutral','Calm','Happy','Proud','Struggling','Motivated'].map(x=>`<div class="chip${w.emotion===x?' sel':''}" data-group="emotion" data-val="${x}">${x}</div>`).join('')}
+      </div>
+    </div>
+    <div class="w-section">
+      <div class="w-sec-label">💪 Body feel</div>
+      <div class="chips" id="chips-body">
+        ${['Sore','Tired','Strong','Great'].map(x=>`<div class="chip${w.body===x?' sel':''}" data-group="body" data-val="${x}">${x}</div>`).join('')}
+      </div>
+    </div>
+    <div class="w-section">
+      <div class="w-sec-label">🌙 Sleep</div>
+      <div class="sleep-row">
+        <input class="sleep-input" id="sleep-hrs" type="number" step="0.5" min="0" max="24" placeholder="hrs" value="${w.sleepHrs||''}"/>
+        <div class="chips" id="chips-sleep">
+          ${['Poor','Good','Great'].map(x=>`<div class="chip${w.sleepQ===x?' sel':''}" data-group="sleep" data-val="${x}">${x}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="w-section">
+      <div class="w-sec-label">✏️ Anything else?</div>
+      <textarea class="w-textarea" id="wellness-notes" placeholder="Write something about today…">${w.notes||''}</textarea>
+    </div>
+    <button class="btn-save" onclick="saveWellness()">Save today's check-in</button>
+  </div>`;
+}
+
+function attachTodayListeners(td, ds) {
+  // Workout changes
+  ['1','2'].forEach(n => {
+    const typeEl = $('w'+n+'type-'+ds);
+    const minsEl = $('w'+n+'mins-'+ds);
+    if (typeEl) typeEl.addEventListener('change', () => saveWorkout(n, ds));
+    if (minsEl) minsEl.addEventListener('input', () => saveWorkout(n, ds));
+  });
+
+  // Bottles
+  document.querySelectorAll(`.bottles[id="bottles-${ds}"] .bottle`).forEach(b => {
+    b.addEventListener('click', () => {
+      const n = parseInt(b.dataset.n);
+      const cur = (ME.days||{})[ds]?.water || 0;
+      const nv = cur>=n ? n-1 : n;
+      saveField(ds, 'water', nv);
+    });
+  });
+
+  // Buttons by data-action
+  document.querySelectorAll(`[data-ds="${ds}"]`).forEach(el => {
+    const action = el.dataset.action;
+    if (!action) return;
+    el.addEventListener('click', () => {
+      if (action === 'addbook') { $('book-modal-title').textContent = "What are you reading?"; $('book-input').value=''; openModal('modal-book'); }
+      if (action === 'finishbook') { $('book-modal-title').textContent = "Start your next book"; $('book-input').value=''; openModal('modal-book'); }
+      if (action === 'markread') saveReadDone(ds);
+      if (action === 'markdiet') saveField(ds, 'dietDone', true);
+      if (action === 'uploadphoto') $('photo-input-'+ds)?.click();
+    });
+  });
+
+  // Photo input
+  const photoInput = $('photo-input-'+ds);
+  if (photoInput) {
+    photoInput.addEventListener('change', e => uploadProgressPhoto(e, ds));
+  }
+
+  // Chip clicks
+  document.querySelectorAll('.chip[data-group]').forEach(c => {
+    c.addEventListener('click', () => {
+      const grp = c.dataset.group;
+      document.querySelectorAll(`.chip[data-group="${grp}"]`).forEach(x => x.classList.remove('sel'));
+      c.classList.add('sel');
+    });
+  });
+}
+
+async function saveWorkout(n, ds) {
+  const typeEl = $('w'+n+'type-'+ds);
+  const minsEl = $('w'+n+'mins-'+ds);
+  if (!typeEl || !minsEl) return;
+  const type = typeEl.value;
+  const mins = parseInt(minsEl.value)||0;
+  const update = {};
+  update[`days.${ds}.w${n}type`] = type;
+  update[`days.${ds}.w${n}mins`] = mins;
+  await updateDoc(doc(db, 'users', ME.id), update);
+}
+
+async function saveField(ds, field, value) {
+  const update = {};
+  update[`days.${ds}.${field}`] = value;
+  await updateDoc(doc(db, 'users', ME.id), update);
+}
+
+async function saveReadDone(ds) {
+  const update = {};
+  update[`days.${ds}.readDone`] = true;
+  if (ME.currentBook) update[`days.${ds}.bookTitle`] = ME.currentBook;
+  await updateDoc(doc(db, 'users', ME.id), update);
+}
+
+async function checkAndSetAllDone(ds) {
+  const td = (ME.days||{})[ds] || {};
+  if (isComplete(td)) {
+    await saveField(ds, 'allDone', true);
+  }
+}
+
+// ── BOOK SAVE ──
+window.saveBook = async () => {
+  const title = $('book-input').value.trim();
+  if (!title) return alert('Please enter a book title');
+  const books = ME.books || [];
+  const updates = { currentBook: title };
+  if (ME.currentBook && ME.currentBook !== title) {
+    books.push({ title: ME.currentBook, finishedDate: todayStr(), finishedDay: dayNum(ME.startDate) });
+    updates.books = books;
+    // Post system message to all groups
+    for (const g of GROUPS) {
+      await addDoc(collection(db, 'groups', g.id, 'messages'), {
+        type:'system', text: ME.name+' finished "'+ME.currentBook+'"', timestamp: serverTimestamp()
+      });
+    }
+  }
+  await updateDoc(doc(db, 'users', ME.id), updates);
+  closeModal('modal-book');
+};
+
+// ── WELLNESS SAVE ──
+window.saveWellness = async () => {
+  const today = todayStr();
+  const w = {
+    energy: document.querySelector('.chip[data-group="energy"].sel')?.dataset.val||'',
+    emotion: document.querySelector('.chip[data-group="emotion"].sel')?.dataset.val||'',
+    body: document.querySelector('.chip[data-group="body"].sel')?.dataset.val||'',
+    sleepHrs: parseFloat($('sleep-hrs')?.value)||0,
+    sleepQ: document.querySelector('.chip[data-group="sleep"].sel')?.dataset.val||'',
+    notes: $('wellness-notes')?.value||'',
+    date: today
+  };
+  const wh = (ME.wellnessHistory||[]).filter(x=>x.date!==today);
+  wh.unshift(w);
+  await updateDoc(doc(db, 'users', ME.id), {
+    [`days.${today}.wellness`]: w,
+    wellnessHistory: wh.slice(0,30)
+  });
+  showNotif('Check-in saved 🌿');
+};
+
+// ── PHOTO UPLOAD ──
+async function uploadProgressPhoto(e, ds) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const area = document.querySelector(`[data-action="uploadphoto"][data-ds="${ds}"]`);
+  if (area) { area.innerHTML = '<div style="text-align:center;padding:8px;color:#7c9885;font-size:12px">⏳ Uploading…</div>'; }
+  try {
+    const b64 = await compressImage(file);
+    // Upload to every group the user is in
+    for (const g of GROUPS) {
+      await addDoc(collection(db, 'groups', g.id, 'messages'), {
+        type: 'photo',
+        subtype: 'progress',
+        senderId: ME.id,
+        senderName: ME.name,
+        dayNum: dayNum(ME.startDate),
+        b64: b64,
+        viewedBy: [ME.id],   // sender has already "seen" it
+        timestamp: serverTimestamp()
+      });
+    }
+    await saveField(ds, 'photoDone', true);
+    showNotif('Progress photo shared 📸');
+  } catch(err) {
+    console.error('Photo upload failed:', err);
+    showNotif('Upload failed: '+err.message);
+    if (area) { area.innerHTML = '<div style="color:#dc2626;font-size:12px;text-align:center">Upload failed — tap to retry</div>'; }
+  }
+  if (e.target) e.target.value = '';
+}
+
+// ═══════════════════════════════════════════
+// ── PROGRESS SCREEN ──
+// ═══════════════════════════════════════════
+function renderProgress() {
+  renderGroupTabsFor('prog-tabs', true);
+  const scroll = $('progress-scroll');
+  if (!ACTIVE_GID) { scroll.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa">No group selected</div>'; return; }
+  const members = Object.values(MEMBERS[ACTIVE_GID]||{});
+  const today = todayStr();
+  let html = '';
+
+  // Comparison
+  html += `<div class="slabel">Today's comparison</div>`;
+  html += `<div class="compare-card">`;
+  const colors = ['#7c9885','#60a5fa','#f97316','#a855f7','#ec4899'];
+  members.forEach((m, i) => {
+    const td = (m.days||{})[today]||{};
+    const done = [
+      !!(td.w1type&&td.w1mins>=45),!!(td.w2type&&td.w2mins>=45),
+      (td.water||0)>=4,!!td.readDone,!!td.dietDone,!!td.photoDone
+    ].filter(Boolean).length;
+    const pct = Math.round(done/6*100);
+    const c = colors[i%colors.length];
+    const isMe = m.id===ME.id;
+    html += `<div class="cmp-person">
+      <div class="cmp-top">
+        <div class="cmp-dot" style="background:${c}"></div>
+        <div class="cmp-name">${m.name}${isMe?' (you)':''}</div>
+        <div class="cmp-count">${done}/6</div>
+      </div>
+      <div class="cmp-bar-track"><div class="cmp-bar-fill" style="background:${c};width:${pct}%"></div></div>
+      ${m.currentBook?`<div class="cmp-book">📖 ${m.currentBook}</div>`:''}
+    </div>`;
+  });
+  html += `</div>`;
+
+  // View toggle
+  html += `<div class="view-toggle">
+    <button class="vbtn active" id="vbtn-dots" onclick="switchCalView('dots')">Dot view</button>
+    <button class="vbtn" id="vbtn-cal" onclick="switchCalView('cal')">Calendar</button>
+  </div>`;
+
+  // Dot view
+  html += `<div id="view-dots">`;
+  html += `<div class="dot-grid">`;
+  const start = new Date(ME.startDate+'T12:00:00');
+  for (let i=0;i<75;i++) {
+    const d = new Date(start); d.setDate(d.getDate()+i);
+    const ds = d.toISOString().slice(0,10);
+    const dayData = (ME.days||{})[ds];
+    let cls = 'dot future';
+    let clickable = false;
+    if (ds === today) { cls='dot today-dot clickable'; clickable=true; }
+    else if (ds < today) {
+      cls = isComplete(dayData) ? 'dot done clickable' : 'dot grace-dot clickable';
+      clickable = true;
+    }
+    html += `<div class="${cls}" data-ds="${ds}" data-dn="${i+1}">${i+1}</div>`;
+  }
+  html += `</div></div>`;
+
+  // Day detail card (hidden until tap)
+  html += `<div class="day-detail-card" id="day-detail-card"></div>`;
+
+  // Calendar view (hidden initially)
+  html += `<div id="view-cal" style="display:none">`;
+  html += buildCalendarHTML();
+  html += `</div>`;
+
+  // Body stats
+  html += buildBodyStatsHTML();
+
+  // Books
+  html += buildBooksHTML();
+
+  scroll.innerHTML = html;
+
+  // Attach dot click listeners
+  document.querySelectorAll('.dot.clickable').forEach(dot => {
+    dot.addEventListener('click', () => showDayDetail(dot.dataset.ds, parseInt(dot.dataset.dn)));
+  });
+
+  // Attach cal cell click listeners
+  document.querySelectorAll('.cal-cell.c-click').forEach(cell => {
+    cell.addEventListener('click', () => showDayDetail(cell.dataset.ds, parseInt(cell.dataset.dn)));
+  });
+}
+
+function showDayDetail(ds, dn) {
+  const card = $('day-detail-card');
+  const td = (ME.days||{})[ds] || {};
+  const complete = isComplete(td);
+  const isToday = ds === todayStr();
+  const tasks = [
+    { name:'Workout 1', done:!!(td.w1type&&td.w1mins>=45), meta: td.w1type?(td.w1type+' · '+td.w1mins+' min'):'Not logged' },
+    { name:'Workout 2', done:!!(td.w2type&&td.w2mins>=45), meta: td.w2type?(td.w2type+' · '+td.w2mins+' min'):'Not logged' },
+    { name:'Water', done:(td.water||0)>=4, meta:(td.water||0)+' of 4 bottles' },
+    { name:'Reading', done:!!td.readDone, meta:td.bookTitle?('📚 '+td.bookTitle):(ME.currentBook?'📚 '+ME.currentBook:'No book set') },
+    { name:'Diet', done:!!td.dietDone, meta:ME.diet?'"'+ME.diet+'"':'' },
+    { name:'Photo', done:!!td.photoDone, meta:td.photoDone?'Uploaded':'Not uploaded' },
+  ];
+  card.className = 'day-detail-card show';
+  card.innerHTML = `
+    <div class="day-detail-title">Day ${dn} — ${fmtDate(ds)}${isToday?' (today)':''}</div>
+    <div class="day-detail-badge" style="color:${complete?'#166534':'#92400e'}">${complete?'✅ Complete':'⚠ Incomplete'}</div>
+    ${tasks.map(t=>`<div class="detail-task">
+      <div class="detail-check ${t.done?'done':''}">${t.done?'✓':''}</div>
+      <div><div class="detail-task-name">${t.name}</div>${t.meta?`<div class="detail-task-meta">${t.meta}</div>`:''}</div>
+    </div>`).join('')}
+  `;
+}
+
+window.switchCalView = (v) => {
+  $('view-dots').style.display = v==='dots'?'block':'none';
+  $('view-cal').style.display = v==='cal'?'block':'none';
+  $('vbtn-dots').classList.toggle('active', v==='dots');
+  $('vbtn-cal').classList.toggle('active', v==='cal');
+  if (v==='cal') {
+    document.querySelectorAll('.cal-cell.c-click').forEach(cell => {
+      cell.addEventListener('click', () => showDayDetail(cell.dataset.ds, parseInt(cell.dataset.dn)));
+    });
+  }
+};
+
+function buildCalendarHTML() {
+  let h = '';
+  const showPhases = ME.gender==='female' && ME.lastPeriod && ME.cycleLength;
+  if (showPhases) {
+    h += `<div class="phase-legend">
+      <div class="legend-item"><div class="legend-pip" style="background:#f87171"></div>Menstrual</div>
+      <div class="legend-item"><div class="legend-pip" style="background:#60a5fa"></div>Follicular</div>
+      <div class="legend-item"><div class="legend-pip" style="background:#34d399"></div>Ovulation</div>
+      <div class="legend-item"><div class="legend-pip" style="background:#c084fc"></div>Luteal</div>
+    </div>`;
+  }
+  const start = new Date(ME.startDate+'T12:00:00');
+  const today = todayStr();
+  const months = {};
+  for (let i=0;i<75;i++) {
+    const d = new Date(start); d.setDate(d.getDate()+i);
+    const ds = d.toISOString().slice(0,10);
+    const mk = ds.slice(0,7);
+    if (!months[mk]) months[mk]=[];
+    months[mk].push({ds, dn:i+1});
+  }
+  Object.entries(months).forEach(([mk, days]) => {
+    const [yr, mo] = mk.split('-').map(Number);
+    const mName = new Date(yr,mo-1,1).toLocaleDateString([],{month:'long',year:'numeric'});
+    h += `<div class="cal-wrap"><div class="cal-month-hd">${mName}</div><div class="cal-grid">`;
+    ['S','M','T','W','T','F','S'].forEach(x => { h += `<div class="cal-head">${x}</div>`; });
+    const firstDay = new Date(yr,mo-1,1).getDay();
+    for (let e=0;e<firstDay;e++) h += `<div class="cal-cell c-empty"></div>`;
+    const daysInMonth = new Date(yr,mo,0).getDate();
+    const cdMap = new Map(days.map(d=>[parseInt(d.ds.slice(8,10)),d]));
+    for (let day=1;day<=daysInMonth;day++) {
+      const cd = cdMap.get(day);
+      if (cd) {
+        const dayData = (ME.days||{})[cd.ds];
+        let cls = 'cal-cell c-click';
+        if (cd.ds===today) cls+=' c-today';
+        else if (cd.ds<today) cls += isComplete(dayData)?' c-done':' c-grace';
+        else cls+=' c-future';
+        let phase = '';
+        if (showPhases) {
+          const p = cyclePhase(cd.ds, ME.lastPeriod, ME.cycleLength);
+          if (p) phase = `<div class="phase-pip" style="background:${p.color}"></div>`;
+        }
+        h += `<div class="${cls}" data-ds="${cd.ds}" data-dn="${cd.dn}">${day}${phase}</div>`;
+      } else {
+        h += `<div class="cal-cell c-future c-empty">${day}</div>`;
+      }
+    }
+    h += `</div></div>`;
+  });
+  const endDate = challengeEnd(ME.startDate);
+  if (endDate) h += `<div class="finish-pill" style="margin:0 16px 8px">🎉 Challenge ends <strong>${fmtDate(endDate)}</strong></div>`;
+  if (ME.gender==='female' && ME.lastPeriod) {
+    const next = nextPeriodDate(ME.lastPeriod, ME.cycleLength);
+    h += `<div style="margin:0 16px 8px;background:#fdf2f8;border:1.5px solid #f0abcc;border-radius:10px;padding:9px 12px;font-size:11px;color:#9d174d">🌸 Next period expected <strong>${fmtDate(next)}</strong></div>`;
+  }
+  return h;
+}
+
+function buildBodyStatsHTML() {
+  const dn = dayNum(ME.startDate);
+  const unit = ME.unit||'kg';
+  const wLogs = ME.weightLogs||[];
+  const mLogs = ME.measLogs||[];
+  const startW = wLogs[0]?.value||ME.weight||0;
+  const nextWDay = Math.ceil(dn/10)*10;
+  const nextMDay = Math.ceil(dn/25)*25;
+  const wDue = nextWDay<=75;
+  const mDue = nextMDay<=75;
+  let h = `<div class="slabel">Body stats</div>`;
+
+  // Weight
+  h += `<div class="stats-card">
+    <div class="stats-head">
+      <div class="stats-title">Weight (${unit})</div>
+      <div class="due-badge">Next: Day ${nextWDay}</div>
+    </div>
+    <div class="stat-boxes">
+      <div class="stat-box"><div class="stat-box-lbl">Start</div><div class="stat-box-val">${startW}</div></div>`;
+  [10,20,30,40,50,60,70].filter(d=>d<=Math.min(dn+3,75)).slice(0,3).forEach(d=>{
+    const log = wLogs.find(l=>l.day>=d-2&&l.day<=d+2);
+    const chg = log?(log.value-startW).toFixed(1):null;
+    const chgCls = chg&&parseFloat(chg)<0?'stat-box-chg':'stat-box-chg neg';
+    h += `<div class="stat-box"><div class="stat-box-lbl">Day ${d}</div><div class="stat-box-val">${log?log.value:'—'}</div>${chg?`<div class="${chgCls}">${parseFloat(chg)>0?'+':''}${chg}</div>`:''}</div>`;
+  });
+  h += `</div>`;
+  h += `<button class="log-btn" onclick="openModal('modal-weight')">Log weight</button>`;
+  h += `</div>`;
+
+  // Measurements
+  const baseMeas = ME.measurements||{};
+  const lastMeas = mLogs[mLogs.length-1]||{};
+  h += `<div class="stats-card">
+    <div class="stats-head"><div class="stats-title">Measurements</div><div class="due-badge">Next: Day ${nextMDay}</div></div>
+    <div class="meas-grid">`;
+  ['chest','waist','hips','arms','thighs'].forEach(k=>{
+    const b = baseMeas[k]||0;
+    const c = lastMeas[k];
+    const chg = c?(c-b).toFixed(1):null;
+    const chgCls = chg&&parseFloat(chg)<0?'meas-chg':'meas-chg neg';
+    const span = k==='thighs'?'grid-column:span 2':'';
+    h += `<div class="meas-box" style="${span}">
+      <div class="meas-lbl">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
+      <div class="meas-val">${b} → ${c||'—'}</div>
+      ${chg?`<div class="${chgCls}">${parseFloat(chg)>0?'+':''}${chg}</div>`:''}
+    </div>`;
+  });
+  h += `</div>`;
+  h += `<button class="log-btn" onclick="openModal('modal-meas')">Log measurements</button>`;
+  h += `</div>`;
+  return h;
+}
+
+function buildBooksHTML() {
+  const books = ME.books||[];
+  let h = `<div class="slabel">Books completed</div><div class="book-list-card">`;
+  if (ME.currentBook) {
+    h += `<div class="book-item current">
+      <div class="book-num">→</div>
+      <div><div class="book-item-title">${ME.currentBook}</div><div class="book-item-sub" style="color:#7c9885">Currently reading</div></div>
+    </div>`;
+  }
+  if (!books.length && !ME.currentBook) {
+    h += `<div style="text-align:center;color:#aaa;font-size:12px;padding:8px">No books yet — add one from Today</div>`;
+  } else {
+    [...books].reverse().forEach((b,i) => {
+      h += `<div class="book-item">
+        <div class="book-num">${books.length-i}</div>
+        <div><div class="book-item-title">${b.title}</div><div class="book-item-sub">Finished day ${b.finishedDay} · ${fmtDate(b.finishedDate)}</div></div>
+      </div>`;
+    });
+  }
+  h += `</div>`;
+  return h;
+}
+
+// Weight & Meas log
+window.saveWeightLog = async () => {
+  const val = parseFloat($('weight-input').value);
+  if (!val) return alert('Enter a value');
+  const logs = ME.weightLogs||[];
+  logs.push({ day: dayNum(ME.startDate), date: todayStr(), value: val });
+  await updateDoc(doc(db, 'users', ME.id), { weightLogs: logs });
+  closeModal('modal-weight');
+  showNotif('Weight logged ✓');
+};
+window.saveMeasLog = async () => {
+  const entry = {
+    day: dayNum(ME.startDate), date: todayStr(),
+    chest:parseFloat($('m-chest').value)||0, waist:parseFloat($('m-waist').value)||0,
+    hips:parseFloat($('m-hips').value)||0, arms:parseFloat($('m-arms').value)||0,
+    thighs:parseFloat($('m-thighs').value)||0
+  };
+  const logs = ME.measLogs||[];
+  logs.push(entry);
+  await updateDoc(doc(db, 'users', ME.id), { measLogs: logs });
+  closeModal('modal-meas');
+  showNotif('Measurements logged ✓');
+};
+
+// ── GROUP TABS ──
+function renderGroupTabsFor(containerId, includeJoin) {
+  const container = $(containerId);
+  let html = '';
+  GROUPS.forEach(g => {
+    html += `<div class="gtab${g.id===ACTIVE_GID?' active':''}" data-gid="${g.id}">
+      ${g.name||g.id}
+      <div class="unread-dot" id="unread-${g.id}"></div>
+    </div>`;
+  });
+  if (includeJoin) html += `<div class="gtab gtab-join" onclick="openModal('modal-join')">+ Join</div>`;
+  container.innerHTML = html;
+  container.querySelectorAll('.gtab[data-gid]').forEach(tab => {
+    tab.addEventListener('click', () => {
+      ACTIVE_GID = tab.dataset.gid;
+      if (CURRENT_SCREEN === 'progress') renderProgress();
+      if (CURRENT_SCREEN === 'chat') { renderChatTabs(); subscribeActiveChat(); }
+    });
+    tab.addEventListener('dblclick', () => {
+      RENAMING_GID = tab.dataset.gid;
+      const g = GROUPS.find(x=>x.id===tab.dataset.gid);
+      $('rename-input').value = g?.name||'';
+      openModal('modal-rename');
+    });
+  });
+}
+window.saveGroupRename = async () => {
+  const name = $('rename-input').value.trim();
+  if (!name || !RENAMING_GID) return;
+  await updateDoc(doc(db, 'groups', RENAMING_GID), { name });
+  const g = GROUPS.find(x=>x.id===RENAMING_GID);
+  if (g) g.name = name;
+  closeModal('modal-rename');
+  if (CURRENT_SCREEN==='progress') renderProgress();
+  if (CURRENT_SCREEN==='chat') renderChatTabs();
+};
+window.joinGroupModal = async () => {
+  const code = $('join-code-input').value.trim().toUpperCase();
+  if (!code) return alert('Enter an invite code');
+  if (code === ME.id) return alert("That's your own code!");
+  const gSnap = await getDoc(doc(db, 'groups', code));
+  if (!gSnap.exists()) return alert('Group not found — check the code');
+  const members = gSnap.data().members||[];
+  if (!members.includes(ME.id)) {
+    await updateDoc(doc(db, 'groups', code), { members:[...members,ME.id] });
+  }
+  const myGroups = ME.groups||[];
+  if (!myGroups.includes(code)) {
+    await updateDoc(doc(db, 'users', ME.id), { groups:[...myGroups,code] });
+  }
+  await loadGroups();
+  ACTIVE_GID = code;
+  closeModal('modal-join');
+  showNotif('Joined group! 🎉');
+  renderProgress();
+};
+
+// ═══════════════════════════════════════════
+// ── CHAT SCREEN ──
+// ═══════════════════════════════════════════
+function renderChatTabs() {
+  renderGroupTabsFor('chat-tabs', false);
+}
+
+function subscribeActiveChat() {
+  if (CHAT_UNSUB) { CHAT_UNSUB(); CHAT_UNSUB=null; }
+  if (!ACTIVE_GID) return;
+  const q = query(collection(db, 'groups', ACTIVE_GID, 'messages'), orderBy('timestamp','asc'));
+  CHAT_UNSUB = onSnapshot(q, snap => {
+    renderChatMessages(snap.docs);
+  }, err => {
+    console.error('Chat error:', err);
+    $('chat-messages').innerHTML = `<div style="padding:20px;text-align:center;color:#dc2626;font-size:12px">Chat error: ${err.message}</div>`;
+  });
+}
+
+function renderChatMessages(docs) {
+  const container = $('chat-messages');
+  container.innerHTML = '';
+  $('chat-unread-dot').classList.remove('show');
+
+  docs.forEach(d => {
+    const msg = { id: d.id, ...d.data() };
+
+    // System message
+    if (msg.type === 'system') {
+      const el = document.createElement('div');
+      el.className = 'sys-msg';
+      el.textContent = msg.text;
+      container.appendChild(el);
+      return;
+    }
+
+    // Photo message
+    if (msg.type === 'photo') {
+      const card = document.createElement('div');
+      const isMe = msg.senderId === ME.id;
+      card.className = 'photo-card ' + (isMe?'mine':'them');
+
+      // Header
+      const header = document.createElement('div');
+      header.className = 'photo-card-top';
+      header.innerHTML = `<div class="photo-av">${initials(msg.senderName||'?')}</div><div><div class="photo-sender">${msg.senderName||'?'}</div><div class="photo-label">${msg.subtype==='progress'?'Day '+(msg.dayNum||'?')+' progress photo':'📷 Shared photo'}</div></div>`;
+      card.appendChild(header);
+
+      // Body
+      const expired = isExpired24h(msg.timestamp);
+      const viewedBy = msg.viewedBy||[];
+      const iViewed = viewedBy.includes(ME.id);
+
+      if (expired) {
+        const exp = document.createElement('div');
+        exp.className = 'photo-expired';
+        exp.textContent = '⏱ Expired — no longer available';
+        card.appendChild(exp);
+      } else if (isMe) {
+        // Sender always sees their own photo
+        const imgWrap = document.createElement('div');
+        imgWrap.className = 'photo-viewing';
+        const img = document.createElement('img');
+        img.src = msg.b64||'';
+        img.style.width='100%';img.style.display='block';img.style.maxHeight='200px';img.style.objectFit='contain';
+        imgWrap.appendChild(img);
+        card.appendChild(imgWrap);
+      } else if (iViewed) {
+        const vw = document.createElement('div');
+        vw.className = 'photo-viewed';
+        vw.textContent = 'Already viewed · no longer available';
+        card.appendChild(vw);
+      } else {
+        // Tap to view
+        const tap = document.createElement('div');
+        tap.className = 'photo-tap';
+        tap.innerHTML = `<div class="photo-tap-icon">👆</div><div class="photo-tap-text">Tap to view once</div><div class="photo-tap-hint">Shows for 5 seconds then disappears</div>`;
+        tap.addEventListener('click', async () => {
+          // Mark viewed in Firestore
+          const viewedArr = [...viewedBy, ME.id];
+          try {
+            await updateDoc(doc(db, 'groups', ACTIVE_GID, 'messages', msg.id), { viewedBy: viewedArr });
+          } catch(e) { console.error(e); }
+          // Show image with 5-second countdown
+          const imgWrap = document.createElement('div');
+          imgWrap.className = 'photo-viewing';
+          const img = document.createElement('img');
+          img.src = msg.b64||'';
+          img.style.width='100%';img.style.display='block';img.style.maxHeight='200px';img.style.objectFit='contain';
+          const countdown = document.createElement('div');
+          countdown.className = 'photo-countdown';
+          countdown.textContent = '5';
+          imgWrap.appendChild(img);
+          imgWrap.appendChild(countdown);
+          tap.replaceWith(imgWrap);
+          let t = 5;
+          const timer = setInterval(() => {
+            t--;
+            countdown.textContent = t;
+            if (t <= 0) {
+              clearInterval(timer);
+              const vwEl = document.createElement('div');
+              vwEl.className = 'photo-viewed';
+              vwEl.textContent = 'Already viewed · no longer available';
+              imgWrap.replaceWith(vwEl);
+            }
+          }, 1000);
+        });
+        card.appendChild(tap);
+      }
+      container.appendChild(card);
+      return;
+    }
+
+    // Text / link message
+    if (msg.type === 'text') {
+      const isMe = msg.senderId === ME.id;
+      const wrap = document.createElement('div');
+      wrap.className = 'msg-wrap ' + (isMe?'me':'them');
+      if (!isMe) {
+        const sn = document.createElement('div');
+        sn.className = 'msg-sender-name';
+        sn.textContent = msg.senderName||'';
+        wrap.appendChild(sn);
+      }
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble ' + (isMe?'me':'them');
+      const text = msg.text||'';
+      const isLink = text.startsWith('http://') || text.startsWith('https://');
+      if (isLink) {
+        let domain = '';
+        try { domain = new URL(text).hostname; } catch(e){}
+        const vid = ytId(text);
+        const linkCard = document.createElement('a');
+        linkCard.href = text;
+        linkCard.target = '_blank';
+        linkCard.rel = 'noopener';
+        linkCard.style.textDecoration = 'none';
+        linkCard.className = 'link-card';
+        if (vid) {
+          const thumb = document.createElement('img');
+          thumb.className = 'link-thumb';
+          thumb.src = `https://img.youtube.com/vi/${vid}/mqdefault.jpg`;
+          thumb.alt = 'Video thumbnail';
+          linkCard.appendChild(thumb);
+        }
+        const linkBody = document.createElement('div');
+        linkBody.className = 'link-body';
+        linkBody.innerHTML = `<div class="link-title">${vid?'🎥 YouTube video':'🔗 Shared link'}</div><div class="link-url">${domain||text}</div>`;
+        linkCard.appendChild(linkBody);
+        bubble.appendChild(linkCard);
+        const openEl = document.createElement('div');
+        openEl.className = 'link-open';
+        openEl.style.color = isMe?'rgba(255,255,255,0.8)':'#7c9885';
+        openEl.textContent = 'Open link →';
+        bubble.appendChild(openEl);
+        bubble.addEventListener('click', () => {});
+      } else {
+        bubble.textContent = text;
+      }
+      wrap.appendChild(bubble);
+      const timeEl = document.createElement('div');
+      timeEl.className = 'msg-time';
+      timeEl.textContent = fmtTime(msg.timestamp);
+      wrap.appendChild(timeEl);
+      container.appendChild(wrap);
+    }
+  });
+  container.scrollTop = container.scrollHeight;
+}
+
+window.sendChatMessage = async () => {
+  const input = $('chat-input');
+  const text = input.value.trim();
+  if (!text || !ACTIVE_GID) return;
+  input.value = '';
+  try {
+    await addDoc(collection(db, 'groups', ACTIVE_GID, 'messages'), {
+      type: 'text', text, senderId: ME.id, senderName: ME.name, timestamp: serverTimestamp()
+    });
+  } catch(err) {
+    console.error('Send failed:', err);
+    input.value = text;
+    showNotif('Failed to send message');
+  }
+};
+
+window.sendChatPhoto = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !ACTIVE_GID) return;
+  e.target.value = '';
+  showNotif('Uploading photo…');
+  try {
+    const b64 = await compressImage(file);
+    await addDoc(collection(db, 'groups', ACTIVE_GID, 'messages'), {
+      type: 'photo', subtype: 'chat',
+      senderId: ME.id, senderName: ME.name,
+      b64: b64,
+      viewedBy: [ME.id],
+      timestamp: serverTimestamp()
+    });
+    showNotif('Photo sent 📷');
+  } catch(err) {
+    console.error('Chat photo failed:', err);
+    showNotif('Photo upload failed: '+err.message);
+  }
+};
+
+// ═══════════════════════════════════════════
+// ── PROFILE SCREEN ──
+// ═══════════════════════════════════════════
+function renderProfile() {
+  const scroll = $('profile-scroll');
+  let h = '';
+
+  h += `<div class="profile-hero">
+    <div class="profile-av">${initials(ME.name)}</div>
+    <div>
+      <div class="profile-name">${ME.name||''}</div>
+      <div class="profile-diet">"${ME.diet||''}"</div>
+    </div>
+  </div>`;
+
+  h += `<div class="code-box">
+    <div>
+      <div class="code-label">Your invite code</div>
+      <div class="code-val">${ME.id||''}</div>
+    </div>
+    <button class="copy-btn" onclick="copyCode()">Copy</button>
+  </div>`;
+
+  // Wellness history
+  h += `<div class="slabel">Wellness history</div>`;
+  const wh = ME.wellnessHistory||[];
+  h += `<div class="card">`;
+  if (!wh.length) {
+    h += `<div style="text-align:center;color:#aaa;font-size:12px;padding:8px">No check-ins yet</div>`;
+  } else {
+    wh.slice(0,7).forEach(w => {
+      h += `<div class="wellness-history-row">
+        <div class="wh-date">${fmtDate(w.date).slice(0,6)}</div>
+        <div class="wh-tags">
+          ${w.energy?`<div class="wh-tag">${w.energy}</div>`:''}
+          ${w.emotion?`<div class="wh-tag">${w.emotion}</div>`:''}
+          ${w.body?`<div class="wh-tag">${w.body}</div>`:''}
+          ${w.sleepHrs||w.sleepQ?`<div class="wh-tag wh-sleep">${w.sleepHrs||'?'}h · ${w.sleepQ||'?'}</div>`:''}
+        </div>
+      </div>`;
+    });
+  }
+  h += `</div>`;
+
+  // Period tracker
+  if (ME.gender==='female' && ME.lastPeriod) {
+    const next = nextPeriodDate(ME.lastPeriod, ME.cycleLength);
+    const du = daysUntil(next);
+    h += `<div class="slabel">Period tracker</div>
+    <div class="card">
+      <div class="period-detail-box">
+        <div class="period-detail-row"><div class="pd-label">Cycle length</div><div class="pd-val">${ME.cycleLength} days</div></div>
+        <div class="period-detail-row"><div class="pd-label">Last period</div><div class="pd-val">${fmtDate(ME.lastPeriod)}</div></div>
+        <div class="period-detail-row"><div class="pd-label">Next expected</div><div class="pd-val">${fmtDate(next)}</div></div>
+        <div class="period-detail-row"><div class="pd-label">Days away</div><div class="pd-val">${du>0?du:0} days</div></div>
+      </div>
+    </div>`;
+  }
+
+  // Edit profile
+  h += `<div class="slabel">Edit profile</div>
+  <div class="card">
+    <div class="field-group">
+      <div class="field-label">Diet plan</div>
+      <input class="field-input" id="edit-diet" value="${(ME.diet||'').replace(/"/g,'&quot;')}" maxlength="60"/>
+    </div>
+    ${ME.gender==='female'?`
+    <div class="field-group">
+      <div class="field-label">Cycle length (days)</div>
+      <input class="field-input" id="edit-cycle" type="number" value="${ME.cycleLength||28}" min="18" max="50"/>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Last period start date</div>
+      <input class="field-input" id="edit-period" type="date" value="${ME.lastPeriod||''}"/>
+    </div>`:''}
+    <button class="btn-save" style="font-size:13px;padding:10px" onclick="saveProfileEdits()">Save profile changes</button>
+  </div>`;
+
+  // Edit starting stats
+  h += `<div class="slabel">Edit starting stats</div>
+  <div class="card">
+    <div class="field-group">
+      <div class="field-label">Weight unit</div>
+      <div class="seg-row">
+        <div class="seg-btn${(ME.unit||'kg')==='kg'?' sel':''}" onclick="editPickUnit('kg')">kg</div>
+        <div class="seg-btn${ME.unit==='lbs'?' sel':''}" onclick="editPickUnit('lbs')">lbs</div>
+      </div>
+    </div>
+    <div class="field-group">
+      <div class="field-label">Starting weight</div>
+      <input class="field-input" id="edit-weight" type="number" step="0.1" value="${ME.weight||''}"/>
+    </div>
+    <div class="field-label" style="margin-bottom:6px">Body measurements</div>
+    <div class="meas-grid2">
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Chest</div><input class="field-input" id="edit-chest" type="number" step="0.1" value="${ME.measurements?.chest||''}"/></div>
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Waist</div><input class="field-input" id="edit-waist" type="number" step="0.1" value="${ME.measurements?.waist||''}"/></div>
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Hips</div><input class="field-input" id="edit-hips" type="number" step="0.1" value="${ME.measurements?.hips||''}"/></div>
+      <div class="field-group" style="margin-bottom:0"><div class="field-label">Arms</div><input class="field-input" id="edit-arms" type="number" step="0.1" value="${ME.measurements?.arms||''}"/></div>
+      <div class="field-group" style="margin-bottom:0;grid-column:span 2"><div class="field-label">Thighs</div><input class="field-input" id="edit-thighs" type="number" step="0.1" value="${ME.measurements?.thighs||''}"/></div>
+    </div>
+    <button class="btn-save" style="font-size:13px;padding:10px;margin-top:12px" onclick="saveStatsEdits()">Save stats changes</button>
+  </div>`;
+
+  // Settings
+  h += `<div class="slabel">Settings</div>
+  <div class="card">
+    <div class="setting-row"><div class="setting-label">Challenge started</div><div class="setting-val">${fmtDate(ME.startDate)}</div></div>
+    <div class="setting-row" style="border:none;padding-bottom:0"><button class="btn-danger" onclick="confirmRestart()">Restart challenge from day 1</button></div>
+  </div>`;
+
+  scroll.innerHTML = h;
+}
+
+window.copyCode = () => {
+  navigator.clipboard.writeText(ME.id||'').then(() => showNotif('Invite code copied! 📋'));
+};
+window.confirmRestart = () => {
+  if (confirm('Restart from day 1? All progress will be cleared.')) performRestart('Challenge restarted');
+};
+
+let EDIT_UNIT = null;
+window.editPickUnit = (u) => {
+  EDIT_UNIT = u;
+  document.querySelectorAll('#screen-profile .seg-btn').forEach(b => {
+    b.classList.toggle('sel', b.textContent===u);
+  });
+};
+
+window.saveProfileEdits = async () => {
+  const updates = {};
+  const diet = $('edit-diet')?.value.trim();
+  if (diet) updates.diet = diet;
+  if (ME.gender === 'female') {
+    const cycle = parseInt($('edit-cycle')?.value);
+    const period = $('edit-period')?.value;
+    if (cycle) updates.cycleLength = cycle;
+    if (period) updates.lastPeriod = period;
+  }
+  if (!Object.keys(updates).length) return;
+  await updateDoc(doc(db, 'users', ME.id), updates);
+  showNotif('Profile updated ✓');
+};
+
+window.saveStatsEdits = async () => {
+  const updates = {};
+  if (EDIT_UNIT) updates.unit = EDIT_UNIT;
+  const w = parseFloat($('edit-weight')?.value);
+  if (w) {
+    updates.weight = w;
+    // Update the day-1 weight log entry
+    const logs = ME.weightLogs || [];
+    if (logs.length > 0) logs[0].value = w;
+    else logs.push({ day:1, date: ME.startDate, value: w });
+    updates.weightLogs = logs;
+  }
+  const meas = {
+    chest: parseFloat($('edit-chest')?.value)||ME.measurements?.chest||0,
+    waist: parseFloat($('edit-waist')?.value)||ME.measurements?.waist||0,
+    hips: parseFloat($('edit-hips')?.value)||ME.measurements?.hips||0,
+    arms: parseFloat($('edit-arms')?.value)||ME.measurements?.arms||0,
+    thighs: parseFloat($('edit-thighs')?.value)||ME.measurements?.thighs||0,
+  };
+  updates.measurements = meas;
+  await updateDoc(doc(db, 'users', ME.id), updates);
+  showNotif('Stats updated ✓');
 };
 
 // ── BOOT ──
 async function boot() {
-  const saved = localStorage.getItem('75hard_myCode');
-  if (saved) {
-    const snap = await getDoc(doc(db, 'users', saved));
-    if (snap.exists()) {
-      ME = { ...snap.data(), id: saved };
-      await bootApp();
-      return;
-    }
-  }
-  await initSignup();
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-}
-
-async function bootApp() {
-  document.getElementById('loading-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  document.getElementById('bottom-nav').style.display = 'flex';
-
-  // Subscribe to self
-  if (unsubMe) unsubMe();
-  unsubMe = onSnapshot(doc(db, 'users', ME.id), snap => {
-    if (snap.exists()) {
-      ME = { ...snap.data(), id: ME.id };
-      if (currentScreen === 'today') renderToday();
-      if (currentScreen === 'profile') renderProfile();
-    }
-  });
-
-  await loadGroups();
-
-  // Check for auto-restart due to expired grace period
-  const restartCheck = checkAutoRestart(ME.startDate, ME.days);
-  if (restartCheck.restart) {
-    await updateDoc(doc(db, 'users', ME.id), {
-      startDate: todayStr(), days: {}, books: [], currentBook: null,
-      weightLogs: [{ day:1, date:todayStr(), value: ME.weight||0 }],
-      measurementLogs: [], wellnessHistory: []
-    });
-    ME.startDate = todayStr();
-    ME.days = {};
-    showNotif('⚠ Day ' + restartCheck.failedDay + ' was never completed — challenge restarted from day 1');
-  }
-
-  goTo('progress');
-}
-
-async function loadGroups() {
-  myGroups = [];
-  groupMembers = {};
-  const groups = ME.groups || [];
-  for (const gId of groups) {
-    const snap = await getDoc(doc(db, 'groups', gId));
-    if (!snap.exists()) continue;
-    const g = { id: gId, ...snap.data() };
-    myGroups.push(g);
-    // Load members
-    const members = {};
-    for (const mid of (g.members || [])) {
-      const ms = await getDoc(doc(db, 'users', mid));
-      if (ms.exists()) members[mid] = { id: mid, ...ms.data() };
-    }
-    groupMembers[gId] = members;
-  }
-  if (!activeGroupId && myGroups.length) activeGroupId = myGroups[0].id;
-}
-
-// ── NAVIGATION ──
-window.goTo = (screen) => {
-  currentScreen = screen;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(screen+'-screen').classList.add('active');
-  const nb = document.getElementById('nav-'+screen);
-  if (nb) nb.classList.add('active');
-  if (screen === 'today') renderToday();
-  if (screen === 'progress') renderProgress();
-  if (screen === 'chat') renderChat();
-  if (screen === 'profile') renderProfile();
-};
-
-// ── MODALS ──
-window.openModal = (id) => document.getElementById(id).classList.add('open');
-window.closeModal = (id) => document.getElementById(id).classList.remove('open');
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
-
-// ── TODAY ──
-function renderToday() {
-  if (!ME) return;
-  const today = todayStr();
-  const dn = Math.min(dayNum(ME.startDate), 75);
-  const pct = Math.round(dn/75*100);
-  const str = streak(ME.days, ME.startDate);
-  const todayData = (ME.days || {})[today] || {};
-
-  document.getElementById('today-pill').textContent = ME.name + ' · Day ' + dn;
-  document.getElementById('hero-day').textContent = dn;
-  document.getElementById('hero-streak').textContent = '🔥 ' + str + ' streak';
-  document.getElementById('hero-prog').style.width = pct + '%';
-  document.getElementById('hero-prog-text').textContent = pct + '% complete' + (pct > 0 ? ' — keep going!' : ' — let\'s start!');
-
-  renderTaskList(todayData, today);
-  renderGraceSection();
-  renderPeriodStrip();
-  renderWellnessSection(todayData);
-}
-
-function renderGraceSection() {
-  const banner = document.getElementById('grace-banner-wrap');
-  const pastWrap = document.getElementById('past-days-wrap');
-  const graceDays = getGraceDays(ME.startDate, ME.days);
-
-  if (!graceDays.length) {
-    banner.innerHTML = '';
-    pastWrap.innerHTML = '';
-    return;
-  }
-
-  const worst = graceDays[0];
-  banner.innerHTML = `<div class="grace-banner">
-    <div class="grace-title">⏳ Day ${worst.day} is incomplete — ${worst.daysLeft} day${worst.daysLeft===1?'':'s'} left to fix it</div>
-    <div class="grace-body">You have ${GRACE_DAYS} days from each past day to go back and complete it. After that the challenge restarts automatically.</div>
-  </div>`;
-
-  pastWrap.innerHTML = '';
-  graceDays.forEach(gd => {
-    const td = (ME.days||{})[gd.date] || {};
-    const section = document.createElement('div');
-    section.className = 'past-day-section';
-    const label = document.createElement('div');
-    label.className = 'past-day-label';
-    label.innerHTML = `Day ${gd.day} tasks — <span class="days-left">${gd.daysLeft} day${gd.daysLeft===1?'':'s'} left to complete</span>`;
-    section.appendChild(label);
-    const list = document.createElement('div');
-    list.className = 'task-list';
-    list.style.marginBottom = '8px';
-    list.appendChild(buildTaskCardsForDate(td, gd.date));
-    section.appendChild(list);
-    pastWrap.appendChild(section);
-  });
-}
-
-function buildTaskCardsForDate(td, dateStr) {
-  const frag = document.createDocumentFragment();
-  const w1done = !!(td.w1type && td.w1mins >= 45);
-  const w2done = !!(td.w2type && td.w2mins >= 45);
-  const waterDone = (td.water||0) >= 4;
-  const readDone = !!td.readDone;
-  const dietDone = !!td.dietDone;
-  const photoDone = !!td.photoDone;
-
-  const w1 = makeTaskCard('🏋️', 'Workout 1', w1done ? (td.w1type+' · '+td.w1mins+' min ✓') : (td.w1type||td.w1mins ? 'In progress — '+(td.w1type||'no type')+' · '+(td.w1mins||0)+' min' : 'Tap to edit'), w1done, false);
-  if (!w1done) appendPastWorkoutInputs(w1, dateStr, 1, td);
-  frag.appendChild(w1);
-
-  const w2 = makeTaskCard('🌳', 'Workout 2', w2done ? (td.w2type+' · '+td.w2mins+' min ✓') : (td.w2type||td.w2mins ? 'In progress — '+(td.w2type||'no type')+' · '+(td.w2mins||0)+' min' : 'Tap to edit'), w2done, false);
-  if (!w2done) appendPastWorkoutInputs(w2, dateStr, 2, td);
-  frag.appendChild(w2);
-
-  const wC = makeTaskCard('💧', 'Water', waterDone ? 'All 4 bottles ✓' : ((td.water||0)+' of 4 bottles'), waterDone, false);
-  if (!waterDone) {
-    const bottles = document.createElement('div');
-    bottles.className = 'water-row';
-    for (let i=1;i<=4;i++) {
-      const filled = (td.water||0) >= i;
-      const b = document.createElement('div');
-      b.className = 'bottle-btn' + (filled?' filled':'');
-      b.innerHTML = `<div class="bottle-emoji">🫙</div><div class="bottle-num">${i}</div>`;
-      b.onclick = () => togglePastBottle(dateStr, i);
-      bottles.appendChild(b);
-    }
-    wC.appendChild(bottles);
-  }
-  frag.appendChild(wC);
-
-  const bookForDay = td.bookTitle || ME.currentBook || '';
-  const r = makeTaskCard('📖', 'Reading', readDone ? ('📚 '+(bookForDay||'Unknown book')+' ✓') : (bookForDay ? '📚 '+bookForDay+' — tap to mark done' : 'Tap to mark done'), readDone, false);
-  if (!readDone) {
-    const btn = document.createElement('button');
-    btn.style.cssText = 'margin-top:8px;width:100%;padding:7px;border-radius:8px;background:#eaf3de;border:1px solid #c0dd97;color:#3b6d11;font-size:12px;font-weight:600;cursor:pointer';
-    btn.textContent = 'Mark reading done ✓';
-    btn.onclick = () => savePastDayField(dateStr, 'readDone', true);
-    r.appendChild(btn);
-  }
-  frag.appendChild(r);
-
-  const d = makeTaskCard('🥗', 'Diet', dietDone ? 'Done ✓' : 'Tap to mark done', dietDone, false);
-  if (!dietDone) {
-    const btn = document.createElement('button');
-    btn.style.cssText = 'margin-top:8px;width:100%;padding:7px;border-radius:8px;background:#eaf3de;border:1px solid #c0dd97;color:#3b6d11;font-size:12px;font-weight:600;cursor:pointer';
-    btn.textContent = 'Mark diet done ✓';
-    btn.onclick = () => savePastDayField(dateStr, 'dietDone', true);
-    d.appendChild(btn);
-  }
-  frag.appendChild(d);
-
-  const p = makeTaskCard('📸', 'Photo', photoDone ? 'Uploaded ✓' : 'Tap to upload', photoDone, false);
-  if (!photoDone) {
-    const area = document.createElement('div');
-    area.className = 'photo-upload-area';
-    area.innerHTML = `<div class="photo-upload-label">📷 Tap to upload photo</div><div class="photo-upload-hint">For Day ${dayNum(ME.startDate) - (dayNum(ME.startDate) - parseInt(Object.keys(ME.days||{}).indexOf(dateStr)+1 || 1))}</div>`;
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = 'image/*'; input.style.display = 'none';
-    input.onchange = (e) => handlePastPhotoUpload(e, dateStr);
-    area.onclick = () => input.click();
-    p.appendChild(area);
-    p.appendChild(input);
-  }
-  frag.appendChild(p);
-
-  return frag;
-}
-
-function appendPastWorkoutInputs(card, dateStr, num, td) {
-  const exp = document.createElement('div');
-  exp.className = 'task-expand';
-  const typeOptions = num===1
-    ? ['Strength training','Cardio','HIIT','Yoga','Pilates','Swimming','Cycling','Sports','Other']
-    : ['Walk','Run','Cycling','Swimming','Sports','Hiking','Other'];
-  const selId = 'past-w'+num+'-type-'+dateStr;
-  const minsId = 'past-w'+num+'-mins-'+dateStr;
-  exp.innerHTML = `<div class="workout-row">
-    <select class="workout-select" id="${selId}">
-      <option value="">Type ▾</option>
-      ${typeOptions.map(o=>`<option ${td['w'+num+'type']===o?'selected':''}>${o}</option>`).join('')}
-    </select>
-    <input class="workout-mins" id="${minsId}" type="number" min="1" max="300" placeholder="mins" value="${td['w'+num+'mins']||''}"/>
-  </div>
-  <div class="blocked-hint">⚠ Need type + at least 45 min</div>`;
-  card.appendChild(exp);
-  setTimeout(() => {
-    document.getElementById(selId)?.addEventListener('change', () => savePastWorkout(dateStr, num));
-    document.getElementById(minsId)?.addEventListener('input', () => savePastWorkout(dateStr, num));
-  }, 0);
-}
-
-window.savePastWorkout = async (dateStr, num) => {
-  const type = document.getElementById('past-w'+num+'-type-'+dateStr)?.value;
-  const mins = parseInt(document.getElementById('past-w'+num+'-mins-'+dateStr)?.value)||0;
-  const update = {};
-  update['days.'+dateStr+'.w'+num+'type'] = type;
-  update['days.'+dateStr+'.w'+num+'mins'] = mins;
-  await updateDoc(doc(db, 'users', ME.id), update);
-};
-
-window.togglePastBottle = async (dateStr, n) => {
-  const current = (ME.days||{})[dateStr]?.water || 0;
-  const newVal = current >= n ? n-1 : n;
-  await updateDoc(doc(db, 'users', ME.id), { ['days.'+dateStr+'.water']: newVal });
-};
-
-window.savePastDayField = async (dateStr, field, value) => {
-  const update = { ['days.'+dateStr+'.'+field]: value };
-  if (field === 'readDone' && ME.currentBook) {
-    update['days.'+dateStr+'.bookTitle'] = ME.currentBook;
-  }
-  await updateDoc(doc(db, 'users', ME.id), update);
-};
-
-async function handlePastPhotoUpload(e, dateStr) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const b64 = await compressImage(file);
-  const pastDayNum = Math.round((new Date(dateStr+'T12:00:00') - new Date(ME.startDate+'T12:00:00'))/86400000) + 1;
-  const msg = {
-    type: 'photo', subtype: 'progress', senderId: ME.id, senderName: ME.name,
-    day: pastDayNum, b64, timestamp: serverTimestamp(), viewedBy: [],
-  };
-  for (const g of myGroups) {
-    await addDoc(collection(db, 'groups', g.id, 'messages'), msg);
-  }
-  await savePastDayField(dateStr, 'photoDone', true);
-}
-
-function renderTaskList(todayData, today) {
-  const list = document.getElementById('task-list');
-  const w1done = !!(todayData.w1type && todayData.w1mins >= 45);
-  const w2done = !!(todayData.w2type && todayData.w2mins >= 45);
-  const waterDone = (todayData.water || 0) >= 4;
-  const readDone = !!todayData.readDone;
-  const dietDone = !!todayData.dietDone;
-  const photoDone = !!todayData.photoDone;
-  const allDone = w1done && w2done && waterDone && readDone && dietDone && photoDone;
-
-  list.innerHTML = '';
-
-  // Workout 1
-  const w1Card = makeTaskCard('🏋️', 'Workout 1 (indoor)', w1done ? (todayData.w1type + ' · ' + todayData.w1mins + ' min ✓') : 'Select type and enter minutes', w1done, false);
-  if (!w1done) {
-    const exp = document.createElement('div');
-    exp.className = 'task-expand';
-    exp.innerHTML = `<div class="workout-row">
-      <select class="workout-select" id="w1-type" onchange="saveWorkout(1)">
-        <option value="">Type ▾</option>
-        <option ${todayData.w1type==='Strength training'?'selected':''}>Strength training</option>
-        <option ${todayData.w1type==='Cardio'?'selected':''}>Cardio</option>
-        <option ${todayData.w1type==='HIIT'?'selected':''}>HIIT</option>
-        <option ${todayData.w1type==='Yoga'?'selected':''}>Yoga</option>
-        <option ${todayData.w1type==='Pilates'?'selected':''}>Pilates</option>
-        <option ${todayData.w1type==='Swimming'?'selected':''}>Swimming</option>
-        <option ${todayData.w1type==='Cycling'?'selected':''}>Cycling</option>
-        <option ${todayData.w1type==='Sports'?'selected':''}>Sports</option>
-        <option ${todayData.w1type==='Other'?'selected':''}>Other</option>
-      </select>
-      <input class="workout-mins" id="w1-mins" type="number" min="1" max="300" placeholder="mins" value="${todayData.w1mins||''}" onchange="saveWorkout(1)" oninput="saveWorkout(1)"/>
-    </div>
-    <div class="blocked-hint">⚠ Need type + at least 45 min to mark done</div>`;
-    w1Card.appendChild(exp);
-  }
-  list.appendChild(w1Card);
-
-  // Workout 2
-  const w2Card = makeTaskCard('🌳', 'Workout 2 (outdoor)', w2done ? (todayData.w2type + ' · ' + todayData.w2mins + ' min ✓') : 'Select type and enter minutes', w2done, false);
-  if (!w2done) {
-    const exp = document.createElement('div');
-    exp.className = 'task-expand';
-    exp.innerHTML = `<div class="workout-row">
-      <select class="workout-select" id="w2-type" onchange="saveWorkout(2)">
-        <option value="">Type ▾</option>
-        <option ${todayData.w2type==='Walk'?'selected':''}>Walk</option>
-        <option ${todayData.w2type==='Run'?'selected':''}>Run</option>
-        <option ${todayData.w2type==='Cycling'?'selected':''}>Cycling</option>
-        <option ${todayData.w2type==='Swimming'?'selected':''}>Swimming</option>
-        <option ${todayData.w2type==='Sports'?'selected':''}>Sports</option>
-        <option ${todayData.w2type==='Hiking'?'selected':''}>Hiking</option>
-        <option ${todayData.w2type==='Other'?'selected':''}>Other</option>
-      </select>
-      <input class="workout-mins" id="w2-mins" type="number" min="1" max="300" placeholder="mins" value="${todayData.w2mins||''}" onchange="saveWorkout(2)" oninput="saveWorkout(2)"/>
-    </div>
-    <div class="blocked-hint">⚠ Need type + at least 45 min to mark done</div>`;
-    w2Card.appendChild(exp);
-  }
-  list.appendChild(w2Card);
-
-  // Water
-  const wCard = makeTaskCard('💧', '1 gallon of water', waterDone ? 'All 4 bottles done ✓' : ((todayData.water||0) + ' of 4 bottles done'), waterDone, false);
-  if (!waterDone) {
-    const bottles = document.createElement('div');
-    bottles.className = 'water-row';
-    for (let i=1;i<=4;i++) {
-      const filled = (todayData.water||0) >= i;
-      bottles.innerHTML += `<div class="bottle-btn ${filled?'filled':''}" onclick="toggleBottle(${i})"><div class="bottle-emoji">🫙</div><div class="bottle-num">${i}</div></div>`;
-    }
-    wCard.appendChild(bottles);
-  }
-  list.appendChild(wCard);
-
-  // Reading
-  const rCard = makeTaskCard('📖', 'Read 10 pages', readDone ? 'Done ✓' : (ME.currentBook ? '' : 'Tap to add your book'), readDone, false);
-  if (!readDone) {
-    const bRow = document.createElement('div');
-    if (ME.currentBook) {
-      bRow.className = 'book-row';
-      bRow.innerHTML = `<span class="book-title-text">📚 ${ME.currentBook}</span><button class="book-finish-btn" onclick="finishBook()">Finished? →</button>`;
-      const doneBtn = document.createElement('button');
-      doneBtn.style.cssText = 'margin-top:8px;width:100%;padding:7px;border-radius:8px;background:#eaf3de;border:1px solid #c0dd97;color:#3b6d11;font-size:12px;font-weight:600;cursor:pointer';
-      doneBtn.textContent = 'Mark 10 pages read ✓';
-      doneBtn.onclick = () => saveDayField('readDone', true);
-      rCard.appendChild(bRow);
-      rCard.appendChild(doneBtn);
-    } else {
-      const addBtn = document.createElement('button');
-      addBtn.className = 'book-add-btn';
-      addBtn.textContent = '+ Add your current book';
-      addBtn.onclick = () => openBookModal(false);
-      rCard.appendChild(addBtn);
-    }
-  }
-  list.appendChild(rCard);
-
-  // Diet
-  const dCard = makeTaskCard('🥗', 'Follow your diet', readDone ? '✓' : '', dietDone, false);
-  const dietLine = document.createElement('div');
-  dietLine.className = 'diet-line';
-  dietLine.textContent = '"' + (ME.diet||'Your diet plan') + '"';
-  dCard.querySelector('.task-info').appendChild(dietLine);
-  if (!dietDone) {
-    const dBtn = document.createElement('button');
-    dBtn.style.cssText = 'margin-top:8px;width:100%;padding:7px;border-radius:8px;background:#eaf3de;border:1px solid #c0dd97;color:#3b6d11;font-size:12px;font-weight:600;cursor:pointer';
-    dBtn.textContent = 'Mark diet done ✓';
-    dBtn.onclick = () => saveDayField('dietDone', true);
-    dCard.appendChild(dBtn);
-  }
-  list.appendChild(dCard);
-
-  // Photo
-  const pCard = makeTaskCard('📸', 'Progress photo', photoDone ? 'Uploaded · shared to group chat ✓' : 'Upload to mark done · shared to group chat', photoDone, false);
-  if (!photoDone) {
-    const area = document.createElement('div');
-    area.className = 'photo-upload-area';
-    area.innerHTML = `<div class="photo-upload-label">📷 Tap to upload photo</div><div class="photo-upload-hint">Compressed & shared in group chat for 24 hrs</div>`;
-    area.onclick = () => document.getElementById('photo-file-input').click();
-    pCard.appendChild(area);
-    pCard.appendChild(Object.assign(document.createElement('input'), {
-      type:'file', accept:'image/*', id:'photo-file-input', style:'display:none',
-      onchange: handlePhotoUpload
-    }));
-  }
-  list.appendChild(pCard);
-
-  // Update allDone
-  if (allDone && !(ME.days||{})[today]?.allDone) {
-    saveDayField('allDone', true);
-  }
-}
-
-function makeTaskCard(icon, name, desc, done, blocked) {
-  const card = document.createElement('div');
-  card.className = 'task-card' + (done?' done':'') + (blocked?' blocked':'');
-  card.innerHTML = `<div class="task-top">
-    <div class="task-icon">${icon}</div>
-    <div class="task-info">
-      <div class="task-name">${name}</div>
-      ${desc ? `<div class="task-desc">${desc}</div>` : ''}
-    </div>
-    <div class="task-check">${done?'✓':''}</div>
-  </div>`;
-  return card;
-}
-
-window.saveWorkout = async (num) => {
-  const type = document.getElementById('w'+num+'-type')?.value;
-  const mins = parseInt(document.getElementById('w'+num+'-mins')?.value)||0;
-  const today = todayStr();
-  const update = {};
-  update['days.'+today+'.w'+num+'type'] = type;
-  update['days.'+today+'.w'+num+'mins'] = mins;
-  await updateDoc(doc(db, 'users', ME.id), update);
-};
-
-window.toggleBottle = async (n) => {
-  const today = todayStr();
-  const current = (ME.days||{})[today]?.water || 0;
-  const newVal = current >= n ? n-1 : n;
-  await updateDoc(doc(db, 'users', ME.id), { ['days.'+today+'.water']: newVal });
-};
-
-async function saveDayField(field, value) {
-  const today = todayStr();
-  const update = { ['days.'+today+'.'+field]: value };
-  if (field === 'readDone' && ME.currentBook) {
-    update['days.'+today+'.bookTitle'] = ME.currentBook;
-  }
-  await updateDoc(doc(db, 'users', ME.id), update);
-}
-
-window.openBookModal = (isFinish) => {
-  document.getElementById('book-modal-title').textContent = isFinish ? 'Start your next book' : "What are you reading?";
-  document.getElementById('book-title-input').value = '';
-  openModal('book-modal');
-};
-window.finishBook = () => openBookModal(true);
-
-window.saveBook = async () => {
-  const title = document.getElementById('book-title-input').value.trim();
-  if (!title) return alert('Please enter a book title');
-  const books = ME.books || [];
-  if (ME.currentBook) {
-    books.push({ title: ME.currentBook, finishedDay: dayNum(ME.startDate), finishedDate: todayStr() });
-    // Send system message to all groups
-    for (const g of myGroups) {
-      await addDoc(collection(db, 'groups', g.id, 'messages'), {
-        type: 'system', text: ME.name + ' finished "' + ME.currentBook + '"',
-        timestamp: serverTimestamp()
-      });
-    }
-  }
-  await updateDoc(doc(db, 'users', ME.id), { currentBook: title, books });
-  closeModal('book-modal');
-};
-
-async function handlePhotoUpload(e) {
-  const file = e.target.files[0];
-  if (!file) return;
   try {
-    const b64 = await compressImage(file);
-    const today = todayStr();
-    const msg = {
-      type: 'photo', subtype: 'progress', senderId: ME.id, senderName: ME.name,
-      day: dayNum(ME.startDate), b64,
-      timestamp: serverTimestamp(),
-      viewedBy: [],
-    };
-    for (const g of myGroups) {
-      await addDoc(collection(db, 'groups', g.id, 'messages'), msg);
-    }
-    await saveDayField('photoDone', true);
-    showNotif('Photo uploaded and shared 📸');
-  } catch (err) {
-    console.error('Photo upload failed:', err);
-    alert('Photo upload failed — try a smaller photo or check your connection.');
-  }
-}
-
-function renderPeriodStrip() {
-  const wrap = document.getElementById('period-strip-wrap');
-  if (ME.gender !== 'female' || !ME.lastPeriod) { wrap.innerHTML=''; return; }
-  const next = nextPeriod(ME.lastPeriod, ME.cycleLength);
-  const days = daysUntil(next);
-  wrap.innerHTML = `<div class="period-strip" style="margin:8px 16px 0">
-    <div><div class="period-left">Next period in</div><div class="period-date">Est. ${fmtDate(next)}</div></div>
-    <div><span class="period-days-big">${days > 0 ? days : 0}</span> <span class="period-days-lbl">days</span></div>
-  </div>`;
-}
-
-function renderWellnessSection(todayData) {
-  const locked = document.getElementById('wellness-locked');
-  const form = document.getElementById('wellness-form');
-  const allDone = todayData?.allDone;
-  if (!allDone) {
-    locked.style.display = 'block';
-    form.style.display = 'none';
-  } else {
-    locked.style.display = 'none';
-    form.style.display = 'block';
-    if (todayData.wellness) {
-      const w = todayData.wellness;
-      restoreChip('energy-chips', w.energy);
-      restoreChip('emotion-chips', w.emotion);
-      restoreChip('body-chips', w.body);
-      restoreChip('sleep-chips', w.sleepQuality);
-      if (document.getElementById('sleep-hrs')) document.getElementById('sleep-hrs').value = w.sleepHrs || '';
-      if (document.getElementById('wellness-notes')) document.getElementById('wellness-notes').value = w.notes || '';
-    }
-  }
-}
-
-function restoreChip(containerId, value) {
-  document.querySelectorAll('#'+containerId+' .chip').forEach(c => {
-    c.classList.toggle('sel', c.textContent === value);
-  });
-}
-
-window.selectChip = (el, group) => {
-  const container = el.parentElement;
-  container.querySelectorAll('.chip').forEach(c => c.classList.remove('sel'));
-  el.classList.add('sel');
-  wellnessSelections[group] = el.textContent;
-};
-
-window.saveWellness = async () => {
-  const today = todayStr();
-  const wellness = {
-    energy: document.querySelector('#energy-chips .chip.sel')?.textContent || '',
-    emotion: document.querySelector('#emotion-chips .chip.sel')?.textContent || '',
-    body: document.querySelector('#body-chips .chip.sel')?.textContent || '',
-    sleepHrs: parseFloat(document.getElementById('sleep-hrs')?.value)||0,
-    sleepQuality: document.querySelector('#sleep-chips .chip.sel')?.textContent || '',
-    notes: document.getElementById('wellness-notes')?.value || '',
-    date: today,
-  };
-  await updateDoc(doc(db, 'users', ME.id), { ['days.'+today+'.wellness']: wellness });
-  const wh = ME.wellnessHistory || [];
-  wh.unshift({ ...wellness });
-  await updateDoc(doc(db, 'users', ME.id), { wellnessHistory: wh.slice(0,30) });
-  showNotif('Check-in saved 🌿');
-};
-
-// ── PROGRESS ──
-function renderProgress() {
-  renderGroupTabs('prog-group-tabs', true);
-  renderCompare();
-  renderDotView();
-  renderCalView();
-  renderBodyStats();
-  renderBooks();
-}
-
-function renderGroupTabs(containerId, includeJoin) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  for (const g of myGroups) {
-    const tab = document.createElement('div');
-    tab.className = 'g-tab' + (g.id === activeGroupId ? ' active' : '');
-    tab.textContent = g.name || g.id;
-    tab.onclick = () => { activeGroupId = g.id; renderProgress(); if(currentScreen==='chat') renderChat(); };
-    container.appendChild(tab);
-  }
-  if (includeJoin) {
-    const join = document.createElement('div');
-    join.className = 'g-tab g-tab-join';
-    join.textContent = '+ Join';
-    join.onclick = () => openModal('join-modal');
-    container.appendChild(join);
-  }
-}
-
-function renderCompare() {
-  const card = document.getElementById('compare-card');
-  if (!activeGroupId || !groupMembers[activeGroupId]) { card.innerHTML = '<div style="color:#b4b2a9;font-size:12px;text-align:center;padding:8px">No group selected</div>'; return; }
-  const members = Object.values(groupMembers[activeGroupId]);
-  const today = todayStr();
-  const colors = ['#7c9885','#c0dd97','#f0997b','#85b7eb','#afa9ec'];
-  card.innerHTML = '';
-  members.forEach((m, i) => {
-    const td = (m.days||{})[today] || {};
-    const done = [
-      !!(td.w1type && td.w1mins >= 45),
-      !!(td.w2type && td.w2mins >= 45),
-      (td.water||0) >= 4,
-      !!td.readDone, !!td.dietDone, !!td.photoDone
-    ].filter(Boolean).length;
-    const pct = Math.round(done/6*100);
-    const color = colors[i % colors.length];
-    const isMe = m.id === ME.id;
-    const div = document.createElement('div');
-    div.className = 'cmp-person';
-    div.innerHTML = `<div class="cmp-top"><div class="cmp-dot" style="background:${color}"></div><div class="cmp-name">${m.name}${isMe?' (you)':''}</div><div class="cmp-count">${done}/6</div></div>
-    <div class="cmp-bar-wrap"><div class="cmp-bar" style="background:${color};width:${pct}%"></div></div>
-    ${m.currentBook ? `<div class="cmp-book">📖 ${m.currentBook}</div>` : ''}`;
-    card.appendChild(div);
-  });
-}
-
-function renderDotView() {
-  const wrap = document.getElementById('dot-view');
-  wrap.innerHTML = '';
-  if (!ME.startDate) return;
-  const grid = document.createElement('div');
-  grid.className = 'dot-grid';
-  const today = todayStr();
-  const start = new Date(ME.startDate+'T12:00:00');
-  for (let i=0;i<75;i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate()+i);
-    const ds = d.toISOString().slice(0,10);
-    const dot = document.createElement('div');
-    dot.className = 'dot';
-    dot.textContent = i+1;
-    dot.title = 'Day '+(i+1)+': '+ds;
-    if (ds === today) { dot.classList.add('today'); dot.onclick = () => showDayDetail(i+1, ds); }
-    else if (ds < today) {
-      const day = (ME.days||{})[ds];
-      const complete = dayCompleteCheck(day);
-      dot.classList.add(complete ? 'done' : 'future');
-      dot.onclick = () => showDayDetail(i+1, ds);
-    } else dot.classList.add('future');
-    grid.appendChild(dot);
-  }
-  wrap.appendChild(grid);
-}
-
-function showDayDetail(dn, dateStr) {
-  const card = document.getElementById('day-detail-card');
-  const td = (ME.days||{})[dateStr] || {};
-  const complete = dayCompleteCheck(td);
-  const isToday = dateStr === todayStr();
-
-  const tasks = [
-    { name: 'Workout 1', done: !!(td.w1type && td.w1mins>=45), meta: td.w1type ? (td.w1type+' · '+(td.w1mins||0)+' min') : 'Not started' },
-    { name: 'Workout 2', done: !!(td.w2type && td.w2mins>=45), meta: td.w2type ? (td.w2type+' · '+(td.w2mins||0)+' min') : 'Not started' },
-    { name: 'Water', done: (td.water||0)>=4, meta: (td.water||0)+' of 4 bottles' },
-    { name: 'Reading', done: !!td.readDone, meta: td.bookTitle ? ('📚 '+td.bookTitle) : (ME.currentBook ? '📚 '+ME.currentBook : 'No book set') },
-    { name: 'Diet', done: !!td.dietDone, meta: ME.diet ? '"'+ME.diet+'"' : '' },
-    { name: 'Photo', done: !!td.photoDone, meta: td.photoDone ? 'Uploaded' : 'Not uploaded' },
-  ];
-
-  card.innerHTML = `<div class="day-detail-title">Day ${dn} — ${fmtDate(dateStr)}${isToday?' (today)':''}</div>
-    <div class="day-detail-badge" style="color:${complete?'#3b6d11':'#92400e'}">${complete?'✅ Complete':'⚠ Incomplete'}</div>
-    ${tasks.map(t => `<div class="detail-task-row"><div class="detail-task-check ${t.done?'done':''}">${t.done?'✓':''}</div><div><div class="detail-task-name">${t.name}</div>${t.meta?`<div class="detail-task-meta">${t.meta}</div>`:''}</div></div>`).join('')}`;
-  card.classList.add('show');
-}
-
-function renderCalView() {
-  const wrap = document.getElementById('cal-view');
-  wrap.innerHTML = '';
-  if (!ME.startDate) return;
-  const today = todayStr();
-  const start = new Date(ME.startDate+'T12:00:00');
-  const endDate = challengeEndDate(ME.startDate);
-  const showPhases = ME.gender === 'female' && ME.lastPeriod && ME.cycleLength;
-
-  if (showPhases) {
-    const legend = document.createElement('div');
-    legend.className = 'phase-legend';
-    legend.innerHTML = `
-      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>Menstrual</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Follicular</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#34d399"></div>Ovulation</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Luteal</div>`;
-    wrap.appendChild(legend);
-  }
-
-  // Group days by month
-  const months = {};
-  for (let i=0;i<75;i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate()+i);
-    const ds = d.toISOString().slice(0,10);
-    const monthKey = ds.slice(0,7);
-    if (!months[monthKey]) months[monthKey] = [];
-    months[monthKey].push({ ds, dayNum: i+1 });
-  }
-
-  Object.entries(months).forEach(([monthKey, days]) => {
-    const [yr, mo] = monthKey.split('-');
-    const monthName = new Date(parseInt(yr), parseInt(mo)-1, 1).toLocaleDateString([],{month:'long',year:'numeric'});
-    const mWrap = document.createElement('div');
-    mWrap.className = 'cal-wrap';
-    const label = document.createElement('div');
-    label.className = 'cal-month-label';
-    label.textContent = monthName;
-    mWrap.appendChild(label);
-    const grid = document.createElement('div');
-    grid.className = 'cal-grid';
-    ['S','M','T','W','T','F','S'].forEach(h => {
-      const hd = document.createElement('div');
-      hd.className = 'cal-head';
-      hd.textContent = h;
-      grid.appendChild(hd);
-    });
-    const firstDay = new Date(parseInt(yr), parseInt(mo)-1, 1).getDay();
-    for (let e=0;e<firstDay;e++) {
-      const empty = document.createElement('div');
-      empty.className = 'cal-cell empty';
-      grid.appendChild(empty);
-    }
-    const daysInMonth = new Date(parseInt(yr), parseInt(mo), 0).getDate();
-    const challengeDays = new Map(days.map(d => [parseInt(d.ds.slice(8,10)), d]));
-    for (let day=1;day<=daysInMonth;day++) {
-      const cell = document.createElement('div');
-      cell.className = 'cal-cell';
-      cell.textContent = day;
-      const cd = challengeDays.get(day);
-      if (cd) {
-        if (cd.ds === today) { cell.classList.add('today'); cell.onclick = () => showDayDetail(cd.dayNum, cd.ds); }
-        else if (cd.ds < today) {
-          const dayData = (ME.days||{})[cd.ds];
-          const complete = dayCompleteCheck(dayData);
-          cell.classList.add(complete ? 'done' : 'future');
-          cell.onclick = () => showDayDetail(cd.dayNum, cd.ds);
-        } else cell.classList.add('future');
-        if (showPhases) {
-          const phase = getCyclePhase(cd.ds, ME.lastPeriod, ME.cycleLength);
-          if (phase) {
-            const pdot = document.createElement('div');
-            pdot.style.cssText = `width:4px;height:4px;border-radius:50%;margin:1px auto 0;background:${phase.color}`;
-            cell.appendChild(pdot);
-          }
-        }
-      } else cell.classList.add('future');
-      grid.appendChild(cell);
-    }
-    mWrap.appendChild(grid);
-    wrap.appendChild(mWrap);
-  });
-
-  if (endDate) {
-    const pill = document.createElement('div');
-    pill.className = 'finish-pill';
-    pill.innerHTML = '🎉 Challenge ends on <strong>' + fmtDate(endDate) + '</strong>';
-    wrap.appendChild(pill);
-  }
-
-  if (showPhases) {
-    const next = nextPeriod(ME.lastPeriod, ME.cycleLength);
-    const ovulDate = new Date(next+'T12:00:00');
-    ovulDate.setDate(ovulDate.getDate() - Math.round(ME.cycleLength*0.5));
-    const info = document.createElement('div');
-    info.style.cssText = 'margin:0 0 8px;background:#fbeaf0;border:1px solid #f4c0d1;border-radius:10px;padding:9px 12px;font-size:11px;color:#72243e';
-    info.innerHTML = `🌸 Next period expected <strong>${fmtDate(next)}</strong>`;
-    wrap.appendChild(info);
-  }
-}
-
-window.switchView = (v) => {
-  currentView = v;
-  document.getElementById('dot-view').style.display = v==='dots' ? 'block' : 'none';
-  document.getElementById('cal-view').style.display = v==='cal' ? 'block' : 'none';
-  document.getElementById('vbtn-dots').classList.toggle('active', v==='dots');
-  document.getElementById('vbtn-cal').classList.toggle('active', v==='cal');
-};
-
-function renderBodyStats() {
-  const section = document.getElementById('body-stats-section');
-  section.innerHTML = '';
-  const dn = dayNum(ME.startDate);
-  const nextWeightDay = Math.ceil(dn/10)*10;
-  const nextMeasDay = Math.ceil(dn/25)*25;
-  const wLogs = ME.weightLogs || [];
-  const unit = ME.unit || 'kg';
-
-  // Weight card
-  const wCard = document.createElement('div');
-  wCard.className = 'stats-card';
-  const wDue = nextWeightDay <= 75 && dn >= nextWeightDay - 1;
-  wCard.innerHTML = `<div class="stats-head"><div class="stats-title">Weight (${unit})</div>${wDue?`<span class="remind-badge">⏰ Log now</span>`:''}</div>`;
-  const wBoxes = document.createElement('div');
-  wBoxes.className = 'stat-boxes';
-  const startW = wLogs[0]?.value || ME.weight || 0;
-  wBoxes.innerHTML = `<div class="stat-box"><div class="stat-box-lbl">Start</div><div class="stat-box-val">${startW}</div></div>`;
-  const intervals = [10,20,30,40,50,60,70].filter(d => d <= Math.min(dn+5, 75));
-  intervals.slice(0,2).forEach(d => {
-    const log = wLogs.find(l => l.day >= d-1 && l.day <= d+1);
-    const chg = log ? (log.value - startW).toFixed(1) : null;
-    wBoxes.innerHTML += `<div class="stat-box"><div class="stat-box-lbl">Day ${d}</div><div class="stat-box-val">${log ? log.value : '—'}</div>${chg ? `<div class="stat-box-chg">${parseFloat(chg)>0?'+':''}${chg}</div>` : ''}</div>`;
-  });
-  wCard.appendChild(wBoxes);
-  if (wDue) {
-    const btn = document.createElement('button');
-    btn.className = 'btn-primary';
-    btn.style.marginTop = '10px';
-    btn.style.fontSize = '13px';
-    btn.style.padding = '9px';
-    btn.textContent = 'Log weight for day ' + dn;
-    btn.onclick = () => { document.getElementById('weight-modal-title').textContent='Log weight — Day '+dn; document.getElementById('weight-modal-label').textContent='Weight ('+unit+')'; openModal('weight-modal'); };
-    wCard.appendChild(btn);
-  }
-  section.appendChild(wCard);
-
-  // Measurements card
-  const mCard = document.createElement('div');
-  mCard.className = 'stats-card';
-  const mDue = nextMeasDay <= 75 && dn >= nextMeasDay - 1;
-  mCard.innerHTML = `<div class="stats-head"><div class="stats-title">Measurements</div>${mDue?`<span class="remind-badge">⏰ Log now</span>`:''}</div>`;
-  const base = ME.measurements || {};
-  const mLogs = ME.measurementLogs || [];
-  const lastLog = mLogs[mLogs.length-1] || {};
-  const mBoxes = document.createElement('div');
-  mBoxes.className = 'meas-boxes';
-  ['chest','waist','hips','arms','thighs'].forEach(key => {
-    const start = base[key] || 0;
-    const latest = lastLog[key];
-    const chg = latest ? (latest - start).toFixed(1) : null;
-    mBoxes.innerHTML += `<div class="meas-box${key==='thighs'?' style="grid-column:span 2"':''}"><div class="meas-box-lbl">${key.charAt(0).toUpperCase()+key.slice(1)}</div><div class="meas-box-val">${start} → ${latest||'—'}</div>${chg?`<div class="meas-box-chg">${parseFloat(chg)>0?'+':''}${chg}</div>`:''}</div>`;
-  });
-  mCard.appendChild(mBoxes);
-  if (mDue) {
-    const btn = document.createElement('button');
-    btn.className = 'btn-primary';
-    btn.style.marginTop = '10px';
-    btn.style.fontSize = '13px';
-    btn.style.padding = '9px';
-    btn.textContent = 'Log measurements for day ' + dn;
-    btn.onclick = () => openModal('meas-modal');
-    mCard.appendChild(btn);
-  }
-  section.appendChild(mCard);
-}
-
-window.saveWeight = async () => {
-  const val = parseFloat(document.getElementById('weight-input').value);
-  if (!val) return alert('Please enter a value');
-  const dn = dayNum(ME.startDate);
-  const logs = ME.weightLogs || [];
-  logs.push({ day: dn, date: todayStr(), value: val });
-  await updateDoc(doc(db, 'users', ME.id), { weightLogs: logs });
-  closeModal('weight-modal');
-  showNotif('Weight logged ✓');
-};
-
-window.saveMeasurements = async () => {
-  const entry = {
-    day: dayNum(ME.startDate), date: todayStr(),
-    chest: parseFloat(document.getElementById('meas-chest').value)||0,
-    waist: parseFloat(document.getElementById('meas-waist').value)||0,
-    hips: parseFloat(document.getElementById('meas-hips').value)||0,
-    arms: parseFloat(document.getElementById('meas-arms').value)||0,
-    thighs: parseFloat(document.getElementById('meas-thighs').value)||0,
-  };
-  const logs = ME.measurementLogs || [];
-  logs.push(entry);
-  await updateDoc(doc(db, 'users', ME.id), { measurementLogs: logs });
-  closeModal('meas-modal');
-  showNotif('Measurements logged ✓');
-};
-
-function renderBooks() {
-  const section = document.getElementById('books-section');
-  section.innerHTML = '';
-  const books = ME.books || [];
-  if (ME.currentBook) {
-    const cur = document.createElement('div');
-    cur.className = 'book-list-item current';
-    cur.innerHTML = `<div class="book-num">→</div><div><div class="book-list-title">${ME.currentBook}</div><div class="book-list-sub" style="color:#7c9885">Currently reading · started day ${dayNum(ME.startDate)}</div></div>`;
-    section.appendChild(cur);
-  }
-  if (!books.length && !ME.currentBook) {
-    section.innerHTML = '<div style="color:#b4b2a9;font-size:12px;text-align:center;padding:8px">No books yet — add one from Today</div>';
-    return;
-  }
-  [...books].reverse().forEach((b, i) => {
-    const item = document.createElement('div');
-    item.className = 'book-list-item';
-    item.innerHTML = `<div class="book-num">${books.length-i}</div><div><div class="book-list-title">${b.title}</div><div class="book-list-sub">Finished day ${b.finishedDay} · ${fmtDate(b.finishedDate)}</div></div>`;
-    section.appendChild(item);
-  });
-}
-
-// ── CHAT ──
-function renderChat() {
-  renderGroupTabs('chat-group-tabs', false);
-  subscribeChat();
-}
-
-function subscribeChat() {
-  if (!activeGroupId) return;
-  if (chatUnsubs[activeGroupId]) return;
-  const q = query(collection(db, 'groups', activeGroupId, 'messages'), orderBy('timestamp'));
-  chatUnsubs[activeGroupId] = onSnapshot(q, snap => {
-    if (currentScreen === 'chat') renderMessages(snap.docs);
-    else {
-      const badge = document.getElementById('chat-nav-badge');
-      if (badge) badge.classList.add('has-badge');
-    }
-  }, err => {
-    console.error('Chat subscription error:', err);
-    const container = document.getElementById('chat-messages');
-    if (container) container.innerHTML = '<div style="text-align:center;padding:20px;color:#c0392b;font-size:12px">Could not load messages: ' + err.message + '<br><br>This is usually a Firestore permissions issue — check your security rules.</div>';
-  });
-}
-
-async function renderMessages(docs) {
-  const container = document.getElementById('chat-messages');
-  container.innerHTML = '';
-  for (const d of docs) {
-    const msg = { id: d.id, ...d.data() };
-    if (msg.type === 'system') {
-      const div = document.createElement('div');
-      div.className = 'sys-message';
-      div.textContent = msg.text;
-      container.appendChild(div);
-      continue;
-    }
-    if (msg.type === 'photo') {
-      if (msg.timestamp && isExpired(msg.timestamp)) {
-        const card = document.createElement('div');
-        card.className = 'photo-msg-card' + (msg.senderId===ME.id?' mine':'');
-        const dayLabel = msg.subtype === 'chat' ? (msg.caption||'Photo') : ('Day '+msg.day+' progress photo');
-        card.innerHTML = `<div class="photo-card-top"><div class="photo-avatar-sm">${initials(msg.senderName)}</div><div><div class="photo-card-name">${msg.senderName}</div><div class="photo-card-day">${dayLabel} · expired</div></div></div><div class="photo-expired-area"><div class="photo-expired-text">Photo expired</div></div>`;
-        container.appendChild(card);
-        continue;
-      }
-      const viewedBy = msg.viewedBy || [];
-      const iViewed = viewedBy.includes(ME.id);
-      const card = document.createElement('div');
-      card.className = 'photo-msg-card' + (msg.senderId===ME.id?' mine':'');
-      const label = msg.subtype === 'chat' ? (msg.caption || '📷 Photo') : ('Day '+msg.day+' progress photo');
-      const header = document.createElement('div');
-      header.className = 'photo-card-top';
-      header.innerHTML = `<div class="photo-avatar-sm">${initials(msg.senderName)}</div><div><div class="photo-card-name">${msg.senderName}</div><div class="photo-card-day">${label}</div></div>`;
-      card.appendChild(header);
-
-      if (msg.senderId === ME.id) {
-        const imgArea = document.createElement('div');
-        imgArea.className = 'photo-img-area';
-        imgArea.innerHTML = `<img src="${msg.b64}" alt="Your photo"/>`;
-        card.appendChild(imgArea);
-      } else if (iViewed) {
-        const viewedArea = document.createElement('div');
-        viewedArea.className = 'photo-viewed-area';
-        viewedArea.innerHTML = `<div class="photo-viewed-text">Already viewed · no longer available</div>`;
-        card.appendChild(viewedArea);
-      } else {
-        const tapArea = document.createElement('div');
-        tapArea.className = 'photo-tap-area';
-        tapArea.innerHTML = `<div class="photo-tap-text">👆 Tap to view once</div><div class="photo-tap-hint">Shows for 5 seconds then disappears</div>`;
-        tapArea.addEventListener('click', () => viewPhotoOnce(msg.id, activeGroupId, tapArea, msg.b64));
-        card.appendChild(tapArea);
-      }
-      container.appendChild(card);
-      continue;
-    }
-    // Regular message
-    const isMe = msg.senderId === ME.id;
-    const isLink = msg.text && (msg.text.startsWith('http://') || msg.text.startsWith('https://'));
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'display:flex;flex-direction:column;max-width:78%;align-self:' + (isMe?'flex-end':'flex-start') + ';align-items:' + (isMe?'flex-end':'flex-start');
-    if (!isMe) wrapper.innerHTML = `<div class="msg-sender">${msg.senderName}</div>`;
-    const bubble = document.createElement('div');
-    bubble.className = 'msg-bubble ' + (isMe?'me':'them');
-    bubble.style.maxWidth = '100%';
-    if (isLink) {
-      const url = msg.text;
-      let domain = '';
-      try { domain = new URL(url).hostname; } catch(e){}
-      const ytId = getYouTubeId(url);
-      const thumb = ytId ? `<img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="Video thumbnail" style="width:100%;display:block;border-radius:8px 8px 0 0"/>` : '';
-      bubble.innerHTML = `<div class="link-card" style="padding:0;overflow:hidden">${thumb}<div style="padding:8px 10px"><div class="link-card-title">🔗 ${ytId ? 'YouTube video' : 'Shared link'}</div><div class="link-card-url">${domain||url}</div></div></div><div style="margin-top:5px;font-size:11px;opacity:0.8"><a href="${url}" target="_blank" style="color:${isMe?'rgba(255,255,255,0.9)':'#7c9885'}">Open link →</a></div>`;
-    } else {
-      bubble.textContent = msg.text || '';
-    }
-    wrapper.appendChild(bubble);
-    const time = document.createElement('div');
-    time.className = 'msg-time' + (isMe?'':' them-time');
-    time.textContent = formatTime(msg.timestamp);
-    wrapper.appendChild(time);
-    container.appendChild(wrapper);
-  }
-  container.scrollTop = container.scrollHeight;
-  document.getElementById('chat-nav-badge')?.classList.remove('has-badge');
-}
-
-async function viewPhotoOnce(msgId, groupId, tapAreaEl, b64) {
-  // Mark as viewed in Firestore immediately
-  const msgRef = doc(db, 'groups', groupId, 'messages', msgId);
-  try {
-    const snap = await getDoc(msgRef);
-    if (snap.exists()) {
-      const viewedBy = snap.data().viewedBy || [];
-      if (!viewedBy.includes(ME.id)) {
-        viewedBy.push(ME.id);
-        await updateDoc(msgRef, { viewedBy });
+    const saved = localStorage.getItem('75hard_uid');
+    if (saved) {
+      const snap = await getDoc(doc(db, 'users', saved));
+      if (snap.exists()) {
+        ME = { ...snap.data(), id: saved };
+        await launchApp();
+        return;
       }
     }
-  } catch(e) { console.error(e); }
-
-  // Show the image with a 5 second countdown, then replace with "viewed" state
-  const card = tapAreaEl.parentElement;
-  const imgArea = document.createElement('div');
-  imgArea.className = 'photo-img-area';
-  imgArea.style.position = 'relative';
-  imgArea.innerHTML = `<img src="${b64}" alt="Photo"/><div style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;font-weight:600;padding:3px 8px;border-radius:10px" id="countdown-${msgId}">5</div>`;
-  tapAreaEl.replaceWith(imgArea);
-
-  let secondsLeft = 5;
-  const countdownEl = document.getElementById('countdown-'+msgId);
-  const interval = setInterval(() => {
-    secondsLeft--;
-    if (countdownEl) countdownEl.textContent = secondsLeft;
-    if (secondsLeft <= 0) {
-      clearInterval(interval);
-      const viewedArea = document.createElement('div');
-      viewedArea.className = 'photo-viewed-area';
-      viewedArea.innerHTML = `<div class="photo-viewed-text">Already viewed · no longer available</div>`;
-      imgArea.replaceWith(viewedArea);
-    }
-  }, 1000);
+    await initSignup();
+    $('loading').style.display = 'none';
+    $('signup').style.display = 'flex';
+  } catch(err) {
+    $('loading').innerHTML = `<div style="padding:24px;text-align:center;color:#dc2626">Failed to connect: ${err.message}<br><br>Check your internet connection and refresh.</div>`;
+  }
 }
 
-window.handleChatPhotoUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file || !activeGroupId) return;
-  try {
-    const b64 = await compressImage(file);
-    await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
-      type: 'photo', subtype: 'chat', caption: '📷 Shared photo',
-      senderId: ME.id, senderName: ME.name,
-      b64, timestamp: serverTimestamp(), viewedBy: [],
-    });
-  } catch (err) {
-    console.error('Chat photo upload failed:', err);
-    alert('Photo upload failed — try a smaller photo or check your connection.');
-  }
-  e.target.value = '';
-};
-
-window.sendMessage = async () => {
-  if (!activeGroupId) return;
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  try {
-    await addDoc(collection(db, 'groups', activeGroupId, 'messages'), {
-      type: 'text', text, senderId: ME.id, senderName: ME.name,
-      timestamp: serverTimestamp()
-    });
-  } catch (err) {
-    console.error('Send message failed:', err);
-    alert('Message failed to send: ' + err.message);
-    input.value = text;
-  }
-};
-
-// ── PROFILE ──
-function renderProfile() {
-  if (!ME) return;
-  document.getElementById('profile-avatar-initials').textContent = initials(ME.name);
-  document.getElementById('profile-name-display').textContent = ME.name || '—';
-  document.getElementById('profile-diet-display').textContent = '"' + (ME.diet||'') + '"';
-  document.getElementById('setting-invite-val').textContent = ME.id || '—';
-  document.getElementById('setting-unit-val').textContent = ME.unit || 'kg';
-  document.getElementById('setting-start-val').textContent = fmtDate(ME.startDate);
-
-  // Wellness history
-  const whCard = document.getElementById('wellness-history-card');
-  whCard.innerHTML = '';
-  const wh = ME.wellnessHistory || [];
-  if (!wh.length) { whCard.innerHTML = '<div style="font-size:12px;color:#b4b2a9;text-align:center;padding:8px">No check-ins yet</div>'; }
-  else {
-    wh.slice(0,7).forEach(w => {
-      const row = document.createElement('div');
-      row.className = 'wellness-history-row';
-      row.innerHTML = `<div class="wh-day">${fmtDate(w.date)?.slice(0,6)||'—'}</div><div class="wh-tags">
-        ${w.energy?`<div class="wh-tag">${w.energy} energy</div>`:''}
-        ${w.emotion?`<div class="wh-tag">${w.emotion}</div>`:''}
-        ${w.body?`<div class="wh-tag">${w.body}</div>`:''}
-        ${w.sleepHrs||w.sleepQuality?`<div class="wh-tag wh-sleep">${w.sleepHrs||'?'}h · ${w.sleepQuality||'?'}</div>`:''}
-      </div>`;
-      whCard.appendChild(row);
-    });
-  }
-
-  // Period section
-  const ps = document.getElementById('period-profile-section');
-  if (ME.gender === 'female' && ME.lastPeriod) {
-    const next = nextPeriod(ME.lastPeriod, ME.cycleLength);
-    const days = daysUntil(next);
-    ps.innerHTML = `<div class="sec-label">Period tracker</div>
-    <div class="card"><div class="period-detail-card">
-      <div class="period-detail-row"><div class="period-detail-lbl">Cycle length</div><div class="period-detail-val">${ME.cycleLength} days</div></div>
-      <div class="period-detail-row"><div class="period-detail-lbl">Last period</div><div class="period-detail-val">${fmtDate(ME.lastPeriod)}</div></div>
-      <div class="period-detail-row"><div class="period-detail-lbl">Next expected</div><div class="period-detail-val">${fmtDate(next)}</div></div>
-      <div class="period-detail-row"><div class="period-detail-lbl">Days away</div><div class="period-detail-val">${days > 0 ? days : 0} days</div></div>
-    </div></div>`;
-  } else ps.innerHTML = '';
-}
-
-// ── JOIN GROUP ──
-window.joinGroupFromModal = async () => {
-  const code = document.getElementById('join-code-input').value.trim().toUpperCase();
-  if (!code) return alert('Please enter an invite code');
-  if (code === ME.id) return alert("That's your own code!");
-  const gRef = doc(db, 'groups', code);
-  const snap = await getDoc(gRef);
-  if (!snap.exists()) return alert('Group not found — check the code and try again');
-  const members = snap.data().members || [];
-  if (!members.includes(ME.id)) {
-    members.push(ME.id);
-    await updateDoc(gRef, { members });
-  }
-  const groups = ME.groups || [];
-  if (!groups.includes(code)) groups.push(code);
-  await updateDoc(doc(db, 'users', ME.id), { groups });
-  closeModal('join-modal');
-  await loadGroups();
-  activeGroupId = code;
-  renderProgress();
-  showNotif('Joined group! 🎉');
-};
-
-// ── RESTART ──
-window.confirmRestart = () => {
-  if (!confirm('Restart from day 1? All your progress will be cleared.')) return;
-  restartChallenge();
-};
-async function restartChallenge() {
-  await updateDoc(doc(db, 'users', ME.id), {
-    startDate: todayStr(), days: {}, books: [], currentBook: null,
-    weightLogs: [{ day:1, date:todayStr(), value: ME.weight||0 }],
-    measurementLogs: [], wellnessHistory: []
-  });
-  showNotif('Challenge restarted — day 1! 💪');
-}
-
-// ── LOGIN WITH CODE ──
-window.loginWithCode = async () => {
-  const code = document.getElementById('login-code').value.trim().toUpperCase();
-  if (!code) return alert('Please enter your invite code');
-  const snap = await getDoc(doc(db, 'users', code));
-  if (!snap.exists()) return alert('Code not found — check it and try again');
-  localStorage.setItem('75hard_myCode', code);
-  ME = { ...snap.data(), id: code };
-  await bootApp();
-};
-
-window.copyInviteCode = () => {
-  const code = ME?.id || '';
-  if (!code) return;
-  navigator.clipboard.writeText(code).then(() => showNotif('Invite code copied! Share it with friends 📋'));
-};
-
-// ── BOOT ──
-boot().catch(err => {
-  document.getElementById('loading-screen').innerHTML = '<div style="padding:24px;text-align:center;color:#c0392b">Failed to connect. Check your internet and refresh.</div>';
-  console.error(err);
-});
+boot();
 </script>
 </body>
 </html>
