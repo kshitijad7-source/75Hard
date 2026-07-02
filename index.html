@@ -663,7 +663,13 @@ let notifTimer = null;
 
 // ── HELPERS ──
 const $ = id => document.getElementById(id);
-const todayStr = () => new Date().toISOString().slice(0,10);
+const todayStr = () => {
+  const d = new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth()+1).padStart(2,'0');
+  const dy = String(d.getDate()).padStart(2,'0');
+  return `${yr}-${mo}-${dy}`;
+};
 
 function dayNum(startDate) {
   if (!startDate) return 1;
